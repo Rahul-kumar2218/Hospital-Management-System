@@ -1,18 +1,24 @@
+
+# Visual Studio
+.vs/
+*.csproj.user
+*.suo
+
 # .NET generated files
 bin/
 obj/
-.vs/
 
-# Local database files
+# Environment files and secrets
+.env
+.env.*
+!.env.example
+
+# Local databases
 *.db
 *.db-shm
 *.db-wal
 *.sqlite
 *.sqlite3
-
-# User-specific files
-*.user
-*.suo
 
 # Logs
 *.log
