@@ -1,0 +1,118 @@
+@model HospitalManagementSystem.ViewModels.DispensePrescriptionViewModel
+@{
+    ViewData["Title"] = "Dispense Prescription";
+    var rx = Model.Prescription;
+}
+
+<div class="row justify-content-center">
+    <div class="col-lg-10">
+        <div class="d-flex align-items-center gap-2 mb-3">
+            <a asp-action="Desk" class="btn btn-sm btn-outline-secondary rounded-pill px-3">&larr; Back to Pharmacy Desk</a>
+            <span class="text-muted small">&bull; Batch-Level Prescription Dispensation</span>
+        </div>
+
+        <div class="card border-0 shadow-sm mb-4" style="border-radius: 18px; overflow:hidden;">
+            <div class="card-header p-4" style="background: linear-gradient(135deg, #198754, #20c997); color:#fff;">
+                <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                    <div>
+                        <span class="badge bg-white text-success px-3 py-1 rounded-pill fw-700 mb-1">PRESCRIPTION @rx.PrescriptionCode</span>
+                        <h4 class="fw-800 mb-0">Dispense Medications for @rx.Patient?.FullName</h4>
+                    </div>
+                    <div class="text-md-end">
+                        <div class="small opacity-75">Attending Doctor</div>
+                        <div class="fw-700">Dr. @rx.Doctor?.FullName</div>
+                        <div class="small opacity-75">Date: @rx.CreatedAt.ToString("dd MMM yyyy")</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card-body p-4">
+                @if (!string.IsNullOrEmpty(rx.Patient?.Allergies))
+                {
+                    <div class="alert alert-danger border-danger d-flex align-items-center gap-3 py-2 px-3 mb-4 shadow-sm rounded-3">
+                        <i class="fas fa-exclamation-triangle fs-3 text-danger"></i>
+                        <div>
+                            <strong class="text-danger">PATIENT DRUG ALLERGIES:</strong>
+                            <span class="fw-700 fs-6 ms-1">@rx.Patient.Allergies</span>
+                            <div class="small text-danger opacity-90">Pharmacist Alert: Verify ingredients before dispensing to prevent anaphylactic / adverse drug reactions.</div>
+                        </div>
+                    </div>
+                }
+
+                <form asp-action="DispenseSubmit" method="post">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="prescriptionId" value="@rx.PrescriptionId" />
+
+                    <h5 class="fw-800 text-dark mb-3"><i class="fas fa-pills text-success me-2"></i>Ordered Line Items</h5>
+
+                    <div class="table-responsive mb-4">
+                        <table class="table table-bordered align-middle">
+                            <thead class="table-light small">
+                                <tr>
+                                    <th style="width: 25%;">Prescribed Item</th>
+                                    <th style="width: 15%;">Dosage &amp; Frequency</th>
+                                    <th style="width: 35%;">Select In-Stock Pharmacy Batch</th>
+                                    <th style="width: 15%;">Dispense Qty</th>
+                                    <th style="width: 10%;">Price (Est)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @for (int i = 0; i < rx.Items.Count; i++)
+                                {
+                                    var item = rx.Items.ElementAt(i);
+                                    // Try to find matching medicine in inventory
+                                    var match = Model.AvailableMedicines.FirstOrDefault(m =>
+                                        m.Name.ToLower().Contains(item.MedicineName.ToLower()) ||
+                                        item.MedicineName.ToLower().Contains(m.Name.ToLower()))
+                                        ?? Model.AvailableMedicines.FirstOrDefault();
+
+                                    <tr>
+                                        <td>
+                                            <div class="fw-700 text-dark">@item.MedicineName</div>
+                                            <small class="text-muted">Instructions: @item.Instructions</small>
+                                        </td>
+                                        <td>
+                                            <div>@item.Dosage</div>
+                                            <small class="text-muted">@item.Frequency &middot; @item.Duration</small>
+                                        </td>
+                                        <td>
+                                            <select name="medicineIds" class="form-select form-select-sm" required>
+                                                @foreach (var med in Model.AvailableMedicines)
+                                                {
+                                                    var isExpired = med.ExpiryDate.HasValue && med.ExpiryDate.Value < DateTime.Today;
+                                                    var isSelected = (match != null && match.MedicineId == med.MedicineId);
+                                                    <option value="@med.MedicineId" selected="@isSelected" disabled="@isExpired" class="@(isExpired ? "text-danger" : "")">
+                                                        @med.Name &mdash; Batch: @(med.BatchNumber ?? "B-MAIN") | Exp: @(med.ExpiryDate.HasValue ? med.ExpiryDate.Value.ToString("MM/yy") : "N/A") | Stock: @med.Quantity @(isExpired ? " [EXPIRED - BLOCKED]" : "")
+                                                    </option>
+                                                }
+                                            </select>
+                                        </td>
+                                        <td>
+                                            <input type="number" name="quantities" class="form-control form-control-sm text-center" min="1" max="100" value="10" required />
+                                        </td>
+                                        <td class="fw-700 text-success text-center">
+                                            ₹@((match?.SellingPrice ?? 10) * 10)
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label small fw-700">Pharmacist Dispensing Instructions / Counseling Remarks</label>
+                        <input type="text" name="instructions" class="form-control" placeholder="Take with food, avoid driving, complete full course as instructed..." value="Take medications strictly as scheduled after meals." />
+                    </div>
+
+                    <div class="d-flex justify-content-end gap-2">
+                        <a asp-action="Desk" class="btn btn-light rounded-pill px-4">Cancel</a>
+                        <button type="submit" class="btn btn-success rounded-pill px-5 fw-700 shadow">
+                            <i class="fas fa-check-double me-1"></i> Confirm Dispense &amp; Deduct Batch Stock
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+

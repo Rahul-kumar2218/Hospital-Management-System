@@ -1,0 +1,336 @@
+@model HospitalManagementSystem.ViewModels.LaboratoryWorkbenchViewModel
+@{
+    ViewData["Title"] = "Laboratory Information Management (LIMS)";
+}
+
+<div class="page-header d-flex flex-wrap justify-content-between align-items-center gap-3">
+    <div>
+        <div class="d-flex align-items-center gap-2 mb-1">
+            <span class="badge bg-info px-3 py-1 rounded-pill text-dark fw-700">LIMS Command Workbench</span>
+            <span class="badge bg-light text-dark border px-2 py-1">6-Stage Sample Lifecycle</span>
+        </div>
+        <h1 class="page-title mb-1">Diagnostic Pathology Workbench</h1>
+        <p class="page-subtitle mb-0">Requisition routing, sample barcoding, analyzer processing, abnormal flagging and clinical verification.</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a asp-action="Request" class="btn btn-primary d-flex align-items-center gap-2 px-3 py-2 fw-600 rounded-pill shadow-sm">
+            <i class="fas fa-plus-circle"></i> New Test Request
+        </a>
+        <a asp-action="Tests" class="btn btn-outline-secondary d-flex align-items-center gap-2 px-3 py-2 fw-600 rounded-pill">
+            <i class="fas fa-list"></i> Test Catalog
+        </a>
+    </div>
+</div>
+
+<!-- 4 STAGE KPI PIPELINE -->
+<div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+        <div class="stat-card blue">
+            <div class="stat-card-icon blue"><i class="fas fa-vial"></i></div>
+            <div class="stat-value">@Model.PendingSampleCollection.Count</div>
+            <div class="stat-label">1. Sample Collection Due</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="stat-card cyan">
+            <div class="stat-card-icon cyan"><i class="fas fa-microscope"></i></div>
+            <div class="stat-value">@Model.InProcessing.Count</div>
+            <div class="stat-label">2. Analyzer Processing</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="stat-card orange">
+            <div class="stat-card-icon orange"><i class="fas fa-user-check"></i></div>
+            <div class="stat-value">@Model.CompletedAwaitingVerification.Count</div>
+            <div class="stat-label">3. Awaiting Pathologist Verification</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="stat-card green">
+            <div class="stat-card-icon green"><i class="fas fa-file-signature"></i></div>
+            <div class="stat-value">@Model.VerifiedReports.Count</div>
+            <div class="stat-label">4. Verified &amp; Published</div>
+        </div>
+    </div>
+</div>
+
+<!-- STAGE 1: SAMPLES PENDING COLLECTION -->
+<div class="card border-0 shadow-sm mb-4" style="border-radius: 18px;">
+    <div class="card-header bg-transparent border-0 pt-4 px-4 pb-2 d-flex justify-content-between align-items-center">
+        <div>
+            <h5 class="fw-800 text-dark mb-0"><i class="fas fa-vial text-primary me-2"></i>Stage 1 &mdash; Orders Awaiting Phlebotomy / Sample Collection</h5>
+            <small class="text-muted">Draw specimen, verify patient identity, and assign unique tracking barcode.</small>
+        </div>
+        <span class="badge bg-primary rounded-pill px-3">@Model.PendingSampleCollection.Count Pending</span>
+    </div>
+    <div class="card-body px-4 pb-4">
+        @if (Model.PendingSampleCollection.Any())
+        {
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light small">
+                        <tr>
+                            <th>Order Code</th>
+                            <th>Patient Details</th>
+                            <th>Diagnostic Test</th>
+                            <th>Doctor</th>
+                            <th>Ordered Time</th>
+                            <th class="text-end">Sample Collection</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var req in Model.PendingSampleCollection)
+                        {
+                            <tr>
+                                <td class="fw-700">@req.RequestCode</td>
+                                <td>
+                                    <div class="fw-700 text-dark">@req.Patient?.FullName</div>
+                                    <small class="text-muted">ID: @req.Patient?.PatientCode &bull; Phone: @req.Patient?.Phone</small>
+                                </td>
+                                <td>
+                                    <span class="fw-600 text-primary">@req.LabTest?.Name</span>
+                                    <small class="text-muted d-block">Category: @req.LabTest?.Category</small>
+                                </td>
+                                <td>Dr. @req.Doctor?.FullName</td>
+                                <td class="small text-muted">@req.RequestedAt.ToString("dd MMM, HH:mm")</td>
+                                <td class="text-end">
+                                    <button type="button" class="btn btn-sm btn-primary rounded-pill px-3 fw-600" data-bs-toggle="modal" data-bs-target="#collectModal-@req.LabTestRequestId">
+                                        <i class="fas fa-barcode me-1"></i> Collect &amp; Barcode
+                                    </button>
+
+                                    <!-- MODAL COLLECT SAMPLE -->
+                                    <div class="modal fade" id="collectModal-@req.LabTestRequestId" tabindex="-1">
+                                        <div class="modal-dialog modal-dialog-centered">
+                                            <div class="modal-content border-0 shadow text-start" style="border-radius:18px;">
+                                                <div class="modal-header bg-primary text-white border-0">
+                                                    <h6 class="modal-title fw-700">Collect Specimen for @req.RequestCode</h6>
+                                                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                                                </div>
+                                                <form asp-action="CollectSample" method="post">
+                                                    @Html.AntiForgeryToken()
+                                                    <input type="hidden" name="id" value="@req.LabTestRequestId" />
+                                                    <div class="modal-body p-4">
+                                                        <div class="mb-3">
+                                                            <label class="form-label small fw-700">Patient</label>
+                                                            <div class="fw-700">@req.Patient?.FullName (@req.Patient?.PatientCode)</div>
+                                                        </div>
+                                                        <div class="mb-3">
+                                                            <label class="form-label small fw-700">Test Ordered</label>
+                                                            <div class="text-primary fw-600">@req.LabTest?.Name</div>
+                                                        </div>
+                                                        <div class="mb-3">
+                                                            <label class="form-label small fw-700">Specimen Type *</label>
+                                                            <select name="sampleType" class="form-select" required>
+                                                                <option value="Whole Blood (EDTA)">Whole Blood (EDTA Vacutainer)</option>
+                                                                <option value="Serum (Clot Activator)">Serum (Clot Activator)</option>
+                                                                <option value="Plasma (Heparin/Citrate)">Plasma (Heparin/Citrate)</option>
+                                                                <option value="Midstream Urine">Midstream Urine</option>
+                                                                <option value="Nasopharyngeal Swab">Nasopharyngeal Swab</option>
+                                                                <option value="Sputum Specimen">Sputum Specimen</option>
+                                                            </select>
+                                                        </div>
+                                                        <div class="mb-3">
+                                                            <label class="form-label small fw-700">Scan / Enter Unique Barcode</label>
+                                                            <input type="text" name="barcode" class="form-control" placeholder="Leave blank for auto-generated tracking barcode" />
+                                                        </div>
+                                                    </div>
+                                                    <div class="modal-footer border-0 p-3 pt-0">
+                                                        <button type="button" class="btn btn-light rounded-pill px-3" data-bs-dismiss="modal">Cancel</button>
+                                                        <button type="submit" class="btn btn-primary rounded-pill px-4 fw-600">Confirm Collection</button>
+                                                    </div>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+        else
+        {
+            <div class="text-center py-4 text-muted">No pending sample collections.</div>
+        }
+    </div>
+</div>
+
+<!-- STAGE 2: IN PROCESSING -->
+<div class="card border-0 shadow-sm mb-4" style="border-radius: 18px;">
+    <div class="card-header bg-transparent border-0 pt-4 px-4 pb-2 d-flex justify-content-between align-items-center">
+        <div>
+            <h5 class="fw-800 text-dark mb-0"><i class="fas fa-microscope text-info me-2"></i>Stage 2 &mdash; Samples in Laboratory Processing</h5>
+            <small class="text-muted">Enter quantitative/qualitative analyzer outputs and flag abnormal markers against reference ranges.</small>
+        </div>
+        <span class="badge bg-info text-dark rounded-pill px-3">@Model.InProcessing.Count Processing</span>
+    </div>
+    <div class="card-body px-4 pb-4">
+        @if (Model.InProcessing.Any())
+        {
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light small">
+                        <tr>
+                            <th>Barcode #</th>
+                            <th>Patient</th>
+                            <th>Test / Specimen</th>
+                            <th>Reference Range</th>
+                            <th>Current Status</th>
+                            <th class="text-end">Result Entry</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var p in Model.InProcessing)
+                        {
+                            <tr>
+                                <td><code>@p.SampleBarcode</code></td>
+                                <td class="fw-700">@p.Patient?.FullName</td>
+                                <td>
+                                    <div class="fw-600">@p.LabTest?.Name</div>
+                                    <small class="text-muted">@p.SampleType</small>
+                                </td>
+                                <td><span class="badge bg-light text-dark border">@(p.LabTest?.NormalRange ?? "Standard")</span></td>
+                                <td>
+                                    <span class="badge bg-info-subtle text-info rounded-pill px-3 py-1">@p.Status</span>
+                                </td>
+                                <td class="text-end">
+                                    <a asp-action="EnterResult" asp-route-id="@p.LabTestRequestId" class="btn btn-sm btn-success rounded-pill px-3 fw-600">
+                                        <i class="fas fa-edit me-1"></i> Enter Results
+                                    </a>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+        else
+        {
+            <div class="text-center py-4 text-muted">No samples currently in analyzer run.</div>
+        }
+    </div>
+</div>
+
+<!-- STAGE 3: AWAITING PATHOLOGIST CLINICAL VERIFICATION -->
+<div class="card border-0 shadow-sm mb-4" style="border-radius: 18px;">
+    <div class="card-header bg-transparent border-0 pt-4 px-4 pb-2 d-flex justify-content-between align-items-center">
+        <div>
+            <h5 class="fw-800 text-dark mb-0"><i class="fas fa-user-check text-warning me-2"></i>Stage 3 &mdash; Completed Results Awaiting Pathologist Verification</h5>
+            <small class="text-muted">Quality Control Safety Guard: Unverified reports are blocked from publication until clinically signed.</small>
+        </div>
+        <span class="badge bg-warning text-dark rounded-pill px-3">@Model.CompletedAwaitingVerification.Count Awaiting Sign-off</span>
+    </div>
+    <div class="card-body px-4 pb-4">
+        @if (Model.CompletedAwaitingVerification.Any())
+        {
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light small">
+                        <tr>
+                            <th>Request #</th>
+                            <th>Patient</th>
+                            <th>Test Name</th>
+                            <th>Entered Values</th>
+                            <th>Abnormal Flag</th>
+                            <th class="text-end">Verification</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var c in Model.CompletedAwaitingVerification)
+                        {
+                            <tr>
+                                <td>@c.RequestCode</td>
+                                <td class="fw-700">@c.Patient?.FullName</td>
+                                <td>@c.LabTest?.Name</td>
+                                <td>
+                                    <div class="small fw-600 text-dark text-truncate" style="max-width:250px;">@c.Result</div>
+                                </td>
+                                <td>
+                                    @if (c.IsAbnormal)
+                                    {
+                                        <span class="badge bg-danger-subtle text-danger rounded-pill px-2 py-1">ABNORMAL: @c.AbnormalFlag</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-success-subtle text-success rounded-pill px-2 py-1">NORMAL</span>
+                                    }
+                                </td>
+                                <td class="text-end">
+                                    <div class="d-inline-flex gap-1">
+                                        <a href="/Laboratory/Report/@c.LabTestRequestId" target="_blank" class="btn btn-sm btn-outline-secondary rounded-pill px-2" title="Preview Draft">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <form asp-action="VerifyReport" method="post">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="id" value="@c.LabTestRequestId" />
+                                            <button type="submit" class="btn btn-sm btn-success rounded-pill px-3 fw-600">
+                                                <i class="fas fa-check me-1"></i> Clinically Verify
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+        else
+        {
+            <div class="text-center py-4 text-muted">All completed results are verified.</div>
+        }
+    </div>
+</div>
+
+<!-- STAGE 4: VERIFIED & PUBLISHED TO PATIENT PORTAL -->
+<div class="card border-0 shadow-sm" style="border-radius: 18px;">
+    <div class="card-header bg-transparent border-0 pt-4 px-4 pb-2 d-flex justify-content-between align-items-center">
+        <div>
+            <h5 class="fw-800 text-dark mb-0"><i class="fas fa-file-signature text-success me-2"></i>Stage 4 &mdash; Verified Diagnostic Reports (Released to Patient)</h5>
+            <small class="text-muted">Clinically accredited reports accessible to patients and consulting doctors.</small>
+        </div>
+        <span class="badge bg-success rounded-pill px-3">@Model.VerifiedReports.Count Published</span>
+    </div>
+    <div class="card-body px-4 pb-4">
+        @if (Model.VerifiedReports.Any())
+        {
+            <div class="table-responsive">
+                <table class="table table-sm table-hover align-middle mb-0">
+                    <thead class="table-light small">
+                        <tr>
+                            <th>Report #</th>
+                            <th>Patient</th>
+                            <th>Test Name</th>
+                            <th>Verified By</th>
+                            <th>Verified Date</th>
+                            <th class="text-end">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var v in Model.VerifiedReports.Take(15))
+                        {
+                            <tr>
+                                <td><code>@v.RequestCode</code></td>
+                                <td class="fw-700">@v.Patient?.FullName</td>
+                                <td>@v.LabTest?.Name</td>
+                                <td><i class="fas fa-user-md text-primary me-1"></i>@(v.VerifiedByDoctorName ?? "Pathologist")</td>
+                                <td class="small text-muted">@(v.VerifiedAt.HasValue ? v.VerifiedAt.Value.ToString("dd MMM yyyy, HH:mm") : "-")</td>
+                                <td class="text-end">
+                                    <a href="/Laboratory/Report/@v.LabTestRequestId" target="_blank" class="btn btn-sm btn-outline-primary rounded-pill px-3">
+                                        <i class="fas fa-file-pdf me-1"></i> View Official Report
+                                    </a>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+        else
+        {
+            <div class="text-center py-4 text-muted">No verified reports yet.</div>
+        }
+    </div>
+</div>
+

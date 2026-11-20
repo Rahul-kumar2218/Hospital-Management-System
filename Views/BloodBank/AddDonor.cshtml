@@ -1,0 +1,17 @@
+﻿@model HospitalManagementSystem.Models.BloodDonor
+@{ ViewData["Title"] = "Register Blood Donor"; }
+<div class="page-header"><div><h1 class="page-title">Register Blood Donor</h1></div></div>
+<div class="row justify-content-center"><div class="col-md-7"><div class="card"><div class="card-body">
+<form asp-action="AddDonor" method="post">@Html.AntiForgeryToken()
+<div asp-validation-summary="All" class="alert alert-danger"></div>
+<div class="row g-3">
+<div class="col-md-6"><label asp-for="DonorName" class="form-label"></label><input asp-for="DonorName" class="form-control" required/></div>
+<div class="col-md-6"><label asp-for="Phone" class="form-label"></label><input asp-for="Phone" class="form-control" required/></div>
+<div class="col-md-4"><label asp-for="BloodGroup" class="form-label"></label><select asp-for="BloodGroup" class="form-select" required><option value="">-- Select --</option>@foreach(var bg in new[]{"A+","A-","B+","B-","O+","O-","AB+","AB-"}){<option value="@bg">@bg</option>}</select></div>
+<div class="col-md-4"><label asp-for="UnitsDonated" class="form-label"></label><input asp-for="UnitsDonated" type="number" class="form-control" min="1" max="5" value="1"/></div>
+<div class="col-md-4"><label asp-for="Email" class="form-label"></label><input asp-for="Email" type="email" class="form-control"/></div>
+<div class="col-12"><label asp-for="Address" class="form-label"></label><textarea asp-for="Address" class="form-control" rows="2"></textarea></div>
+</div>
+<div class="d-flex gap-2 mt-3"><button type="submit" class="btn btn-danger"><i class="fas fa-tint me-2"></i>Register Donor</button><a href="/BloodBank" class="btn btn-outline-secondary">Cancel</a></div>
+</form></div></div></div></div>
+@section Scripts { @{ await Html.RenderPartialAsync("_ValidationScriptsPartial"); } }

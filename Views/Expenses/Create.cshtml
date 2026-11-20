@@ -1,0 +1,13 @@
+﻿@model HospitalManagementSystem.Models.Expense
+@{ ViewData["Title"] = "Record Expense"; }
+<div class="page-header"><div><h1 class="page-title">Record Expense</h1></div></div>
+<div class="row justify-content-center"><div class="col-md-6"><div class="card"><div class="card-body">
+<form asp-action="Create" method="post">@Html.AntiForgeryToken()
+<div class="mb-3"><label asp-for="Description" class="form-label"></label><input asp-for="Description" class="form-control" required/></div>
+<div class="mb-3"><label asp-for="Category" class="form-label"></label><select asp-for="Category" class="form-select"><option value="Salary">Salary</option><option value="Utilities">Utilities</option><option value="Maintenance">Maintenance</option><option value="Medical Supplies">Medical Supplies</option><option value="Equipment">Equipment</option><option value="Other">Other</option></select></div>
+<div class="mb-3"><label asp-for="Amount" class="form-label"></label><input asp-for="Amount" type="number" step="0.01" class="form-control" required/></div>
+<div class="mb-3"><label asp-for="ExpenseDate" class="form-label"></label><input asp-for="ExpenseDate" type="date" class="form-control" value="@DateTime.Today.ToString("yyyy-MM-dd")" required/></div>
+<div class="mb-3"><label asp-for="Notes" class="form-label"></label><textarea asp-for="Notes" class="form-control" rows="2"></textarea></div>
+<div class="d-flex gap-2"><button type="submit" class="btn btn-primary"><i class="fas fa-save me-2"></i>Record</button><a href="/Expenses" class="btn btn-outline-secondary">Cancel</a></div>
+</form></div></div></div></div>
+@section Scripts { @{ await Html.RenderPartialAsync("_ValidationScriptsPartial"); } }

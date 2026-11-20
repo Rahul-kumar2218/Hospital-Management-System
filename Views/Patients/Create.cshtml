@@ -1,0 +1,99 @@
+@model HospitalManagementSystem.Models.Patient
+@{ ViewData["Title"] = "Register Patient"; }
+
+<div class="page-header">
+    <div>
+        <nav aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="/Patients">Patients</a></li><li class="breadcrumb-item active">Register New Patient</li></ol></nav>
+        <h1 class="page-title">Register New Patient</h1>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header"><span class="card-title"><i class="fas fa-user-plus me-2"></i>Patient Information</span></div>
+    <div class="card-body">
+        <!-- Live Duplicate Detection Warning (Phase 3) -->
+        <div id="duplicatePatientWarning" class="alert alert-warning d-none mb-3 border-start border-warning border-4 shadow-sm">
+            <div class="d-flex align-items-center">
+                <i class="fas fa-exclamation-triangle fa-lg me-2 text-warning"></i>
+                <div>
+                    <strong class="d-block">Potential Duplicate Patient Detected</strong>
+                    <span id="duplicateWarningText"></span>
+                </div>
+            </div>
+        </div>
+
+        <form asp-action="Create" method="post">
+            @Html.AntiForgeryToken()
+            <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label asp-for="FullName" class="form-label"></label>
+                    <input asp-for="FullName" class="form-control" placeholder="Enter full name" />
+                    <span asp-validation-for="FullName" class="text-danger small"></span>
+                </div>
+                <div class="col-md-3">
+                    <label asp-for="Gender" class="form-label"></label>
+                    <select asp-for="Gender" class="form-select">
+                        <option value="">Select Gender</option>
+                        <option value="Male">Male</option>
+                        <option value="Female">Female</option>
+                        <option value="Other">Other</option>
+                    </select>
+                    <span asp-validation-for="Gender" class="text-danger small"></span>
+                </div>
+                <div class="col-md-3">
+                    <label asp-for="DateOfBirth" class="form-label"></label>
+                    <input asp-for="DateOfBirth" type="date" class="form-control" />
+                    <span asp-validation-for="DateOfBirth" class="text-danger small"></span>
+                </div>
+                <div class="col-md-4">
+                    <label asp-for="Phone" class="form-label"></label>
+                    <input asp-for="Phone" class="form-control" placeholder="10-digit mobile number" />
+                    <span asp-validation-for="Phone" class="text-danger small"></span>
+                </div>
+                <div class="col-md-4">
+                    <label asp-for="Email" class="form-label"></label>
+                    <input asp-for="Email" type="email" class="form-control" placeholder="Optional" />
+                    <span asp-validation-for="Email" class="text-danger small"></span>
+                </div>
+                <div class="col-md-4">
+                    <label asp-for="BloodGroup" class="form-label"></label>
+                    <select asp-for="BloodGroup" class="form-select">
+                        <option value="">Unknown</option>
+                        @foreach (var bg in new[]{"A+","A-","B+","B-","O+","O-","AB+","AB-"})
+                        { <option value="@bg">@bg</option> }
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="Address" class="form-label"></label>
+                    <textarea asp-for="Address" class="form-control" rows="2" placeholder="Full address"></textarea>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="EmergencyContact" class="form-label"></label>
+                    <input asp-for="EmergencyContact" class="form-control" placeholder="Name: Phone" />
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="AadhaarLastFour" class="form-label">Aadhaar / National ID (Last 4 Digits)</label>
+                    <input asp-for="AadhaarLastFour" class="form-control" maxlength="4" placeholder="e.g. 8921" />
+                    <span asp-validation-for="AadhaarLastFour" class="text-danger small"></span>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="Allergies" class="form-label"></label>
+                    <textarea asp-for="Allergies" class="form-control" rows="2" placeholder="Known allergies (if any)"></textarea>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="MedicalHistory" class="form-label"></label>
+                    <textarea asp-for="MedicalHistory" class="form-control" rows="2" placeholder="Past medical history (if any)"></textarea>
+                </div>
+            </div>
+
+            <div class="d-flex gap-2 mt-4">
+                <button type="submit" class="btn btn-primary"><i class="fas fa-save me-2"></i>Register Patient</button>
+                <a href="/Patients" class="btn btn-outline-secondary">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts { @{ await Html.RenderPartialAsync("_ValidationScriptsPartial"); } }

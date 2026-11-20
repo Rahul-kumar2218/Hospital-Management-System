@@ -1,0 +1,49 @@
+﻿@model HospitalManagementSystem.Models.Prescription
+@{ ViewData["Title"] = "Prescription - " + Model.PrescriptionCode; Layout = null; }
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"/><title>Prescription @Model.PrescriptionCode</title>
+<style>body{font-family:'Segoe UI',sans-serif;margin:0;padding:20px;}
+.rx-page{max-width:700px;margin:0 auto;border:2px solid #0d6efd;border-radius:12px;padding:24px;}
+.rx-header{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:3px solid #0d6efd;padding-bottom:12px;margin-bottom:16px;}
+.hospital-name{font-size:20px;font-weight:800;color:#0d6efd;}
+.rx-symbol{font-size:40px;font-weight:800;color:#0d6efd;}
+.info-row{display:flex;gap:20px;flex-wrap:wrap;background:#f8f9fa;padding:10px;border-radius:8px;margin-bottom:16px;font-size:13px;}
+.med-item{border:1px solid #e0e6ed;border-radius:8px;padding:12px;margin-bottom:8px;}
+.med-name{font-weight:700;font-size:15px;}
+.footer{margin-top:30px;display:flex;justify-content:space-between;}
+.sig-box{border-top:1px solid #333;padding-top:6px;text-align:center;width:180px;font-size:12px;}
+@@media print{.no-print{display:none!important;}}</style>
+</head>
+<body>
+<div class="no-print" style="text-align:right;margin-bottom:16px;"><button onclick="window.print()" style="background:#0d6efd;color:#fff;border:none;padding:8px 18px;border-radius:8px;cursor:pointer;">🖨 Print</button><a href="javascript:history.back()" style="margin-left:8px;color:#6c757d;">← Back</a></div>
+<div class="rx-page">
+    <div class="rx-header">
+        <div><div class="hospital-name">City General Hospital</div><div style="font-size:12px;color:#6c757d;">📍 Main Road, City &nbsp;|&nbsp; 📞 +91-XXXXXXXXXX</div></div>
+        <div style="text-align:right;"><div style="font-size:12px;font-weight:600;">Prescription No.</div><div style="font-size:16px;font-weight:700;color:#0d6efd;">@Model.PrescriptionCode</div><div style="font-size:12px;color:#6c757d;">@Model.CreatedAt.ToString("dd MMMM yyyy")</div></div>
+    </div>
+    <div class="info-row">
+        <div><strong>Patient:</strong> @Model.Patient?.FullName</div>
+        <div><strong>Age/Gender:</strong> @Model.Patient?.Age yrs / @Model.Patient?.Gender</div>
+        <div><strong>Blood Group:</strong> @(Model.Patient?.BloodGroup??"-")</div>
+        <div><strong>Doctor:</strong> Dr. @Model.Doctor?.FullName</div>
+        <div><strong>Department:</strong> @Model.Doctor?.Department?.Name</div>
+    </div>
+    @if(!string.IsNullOrEmpty(Model.Diagnosis)){<div style="margin-bottom:12px;"><strong>Diagnosis:</strong> @Model.Diagnosis</div>}
+    <div class="rx-symbol">℞</div>
+    @foreach(var item in Model.Items){
+    <div class="med-item">
+        <div class="med-name">@item.MedicineName</div>
+        <div style="font-size:13px;color:#6c757d;margin-top:4px;">
+            @if(!string.IsNullOrEmpty(item.Dosage)){<span><strong>Dose:</strong> @item.Dosage &nbsp;</span>}
+            @if(!string.IsNullOrEmpty(item.Frequency)){<span><strong>Freq:</strong> @item.Frequency &nbsp;</span>}
+            @if(!string.IsNullOrEmpty(item.Duration)){<span><strong>Duration:</strong> @item.Duration &nbsp;</span>}
+            @if(!string.IsNullOrEmpty(item.Instructions)){<span><strong>Instruction:</strong> @item.Instructions</span>}
+        </div>
+    </div>}
+    @if(!string.IsNullOrEmpty(Model.Instructions)){<div style="margin-top:12px;"><strong>General Instructions:</strong> @Model.Instructions</div>}
+    @if(Model.FollowUpDate.HasValue){<div style="margin-top:8px;"><strong>Follow-up:</strong> @Model.FollowUpDate.Value.ToString("dd MMMM yyyy")</div>}
+    <div class="footer">
+        <div class="sig-box">Patient Signature</div>
+        <div class="sig-box">Dr. @Model.Doctor?.FullName<br/>@Model.Doctor?.Qualification</div>
+    </div>
+</div>
+</body></html>

@@ -1,0 +1,229 @@
+@model HospitalManagementSystem.ViewModels.DoctorWorkspaceViewModel
+@{
+    ViewData["Title"] = "Doctor Clinical Workspace";
+}
+
+<div class="page-header d-flex flex-wrap justify-content-between align-items-center gap-3">
+    <div>
+        <div class="d-flex align-items-center gap-2 mb-1">
+            <span class="badge bg-success px-3 py-1 rounded-pill">Doctor Station</span>
+            <span class="badge bg-light text-dark border px-2 py-1">@Model.Doctor.Department?.Name</span>
+        </div>
+        <h1 class="page-title mb-1">@Model.Doctor.FullName, @Model.Doctor.Qualification</h1>
+        <p class="page-subtitle mb-0">Clinical Command Center &mdash; Today is @DateTime.Now.ToString("dddd, dd MMMM yyyy")</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a asp-controller="Prescriptions" asp-action="Create" class="btn btn-primary d-flex align-items-center gap-2 px-3 py-2 fw-600 rounded-pill shadow-sm">
+            <i class="fas fa-file-prescription"></i> Write Prescription
+        </a>
+        <a asp-controller="Laboratory" asp-action="Request" class="btn btn-outline-primary d-flex align-items-center gap-2 px-3 py-2 fw-600 rounded-pill">
+            <i class="fas fa-flask"></i> Order Lab Test
+        </a>
+    </div>
+</div>
+
+<!-- STAT CARDS -->
+<div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+        <div class="stat-card blue">
+            <div class="stat-card-icon blue"><i class="fas fa-user-clock"></i></div>
+            <div class="stat-value">@Model.WaitingCount</div>
+            <div class="stat-label">Patients Waiting in OPD</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="stat-card green">
+            <div class="stat-card-icon green"><i class="fas fa-check-double"></i></div>
+            <div class="stat-value">@Model.TotalConsultationsToday</div>
+            <div class="stat-label">Consultations Done Today</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="stat-card cyan">
+            <div class="stat-card-icon cyan"><i class="fas fa-procedures"></i></div>
+            <div class="stat-value">@Model.AssignedInpatients.Count</div>
+            <div class="stat-label">Admitted Inpatients</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="stat-card orange">
+            <div class="stat-card-icon orange"><i class="fas fa-microscope"></i></div>
+            <div class="stat-value">@Model.PendingLabReviews.Count</div>
+            <div class="stat-label">Lab Reports for Review</div>
+        </div>
+    </div>
+</div>
+
+<!-- TODAY'S OPD QUEUE & CONSULTATION CALL -->
+<div class="card border-0 shadow-sm mb-4" style="border-radius: 18px;">
+    <div class="card-header bg-transparent border-0 pt-4 px-4 pb-2 d-flex justify-content-between align-items-center">
+        <div>
+            <h5 class="fw-800 text-dark mb-1"><i class="fas fa-list-ol text-primary me-2"></i>Today's Outpatient (OPD) Queue</h5>
+            <small class="text-muted">Real-time consultation flow &mdash; call next patient directly into consultation room.</small>
+        </div>
+        <a href="/OPD/LiveQueue" target="_blank" class="btn btn-sm btn-outline-primary rounded-pill">
+            <i class="fas fa-tv me-1"></i> Public Screen
+        </a>
+    </div>
+    <div class="card-body px-4 pb-4">
+        @if (Model.TodayOPDQueue.Any())
+        {
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Token #</th>
+                            <th>Patient</th>
+                            <th>Age / Gender</th>
+                            <th>Chief Complaint</th>
+                            <th>Status</th>
+                            <th class="text-end">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var opd in Model.TodayOPDQueue)
+                        {
+                            <tr class="@(opd.Status == "InConsultation" ? "table-primary" : "")">
+                                <td>
+                                    <span class="fs-5 fw-800 text-primary">#@opd.TokenNumber</span>
+                                </td>
+                                <td>
+                                    <div class="fw-700 text-dark">@opd.Patient?.FullName</div>
+                                    <small class="text-muted">ID: @opd.Patient?.PatientCode &bull; Phone: @opd.Patient?.Phone</small>
+                                    @if (!string.IsNullOrEmpty(opd.Patient?.Allergies))
+                                    {
+                                        <span class="badge bg-danger-subtle text-danger ms-1" title="Allergic to @opd.Patient.Allergies">
+                                            <i class="fas fa-allergies me-1"></i>Allergy Alert
+                                        </span>
+                                    }
+                                </td>
+                                <td>@(opd.Patient?.Age) Yrs &middot; @(opd.Patient?.Gender)</td>
+                                <td>@(opd.ChiefComplaint ?? "General Check-up")</td>
+                                <td>
+                                    @if (opd.Status == "Waiting")
+                                    {
+                                        <span class="badge bg-warning-subtle text-warning rounded-pill px-3 py-1">WAITING</span>
+                                    }
+                                    else if (opd.Status == "InConsultation")
+                                    {
+                                        <span class="badge bg-primary rounded-pill px-3 py-1">IN CONSULTATION</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-success-subtle text-success rounded-pill px-3 py-1">COMPLETED</span>
+                                    }
+                                </td>
+                                <td class="text-end">
+                                    <a asp-action="Consultation" asp-route-patientId="@opd.PatientId" asp-route-opdRecordId="@opd.OPDRecordId" class="btn btn-sm btn-primary rounded-pill px-3 fw-600 shadow-sm">
+                                        <i class="fas fa-stethoscope me-1"></i> Start Consultation
+                                    </a>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+        else
+        {
+            <div class="text-center py-4 text-muted">
+                <i class="fas fa-calendar-check fs-2 mb-2 d-block opacity-50"></i>
+                <p class="mb-0">No OPD tokens currently queued for your department today.</p>
+            </div>
+        }
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- ASSIGNED INPATIENTS -->
+    <div class="col-lg-6">
+        <div class="card border-0 shadow-sm h-100" style="border-radius: 18px;">
+            <div class="card-header bg-transparent border-0 pt-4 px-4 pb-2 d-flex justify-content-between align-items-center">
+                <h5 class="fw-800 text-dark mb-0"><i class="fas fa-procedures text-cyan me-2"></i>My Admitted Inpatients</h5>
+                <span class="badge bg-cyan text-white rounded-pill px-3">@Model.AssignedInpatients.Count Inpatients</span>
+            </div>
+            <div class="card-body px-4 pb-4">
+                @if (Model.AssignedInpatients.Any())
+                {
+                    <div class="list-group list-group-flush">
+                        @foreach (var adm in Model.AssignedInpatients)
+                        {
+                            <div class="list-group-item px-0 py-3 border-bottom d-flex justify-content-between align-items-center">
+                                <div>
+                                    <div class="fw-700 text-dark">@adm.Patient?.FullName</div>
+                                    <small class="text-muted">Ward: @adm.Ward &bull; Bed: @adm.Bed?.BedNumber &bull; Admitted: @adm.AdmissionDate.ToString("dd MMM")</small>
+                                    <div class="small text-secondary mt-1">Diagnosis: <strong>@adm.Diagnosis</strong></div>
+                                </div>
+                                <div class="d-flex gap-2">
+                                    <a asp-action="Consultation" asp-route-patientId="@adm.PatientId" class="btn btn-sm btn-outline-primary rounded-pill px-3">
+                                        <i class="fas fa-notes-medical me-1"></i> Clinical Chart
+                                    </a>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <div class="text-center py-4 text-muted">
+                        <i class="fas fa-bed fs-2 mb-2 d-block opacity-50"></i>
+                        <p class="mb-0">No active inpatient admissions under your direct care.</p>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+
+    <!-- PENDING LAB RESULTS FOR CLINICAL REVIEW -->
+    <div class="col-lg-6">
+        <div class="card border-0 shadow-sm h-100" style="border-radius: 18px;">
+            <div class="card-header bg-transparent border-0 pt-4 px-4 pb-2 d-flex justify-content-between align-items-center">
+                <h5 class="fw-800 text-dark mb-0"><i class="fas fa-microscope text-orange me-2"></i>Diagnostic Results Review</h5>
+                <a asp-controller="Laboratory" asp-action="Index" class="small text-primary text-decoration-none fw-600">All Tests &rarr;</a>
+            </div>
+            <div class="card-body px-4 pb-4">
+                @if (Model.PendingLabReviews.Any())
+                {
+                    <div class="list-group list-group-flush">
+                        @foreach (var lab in Model.PendingLabReviews)
+                        {
+                            <div class="list-group-item px-0 py-3 border-bottom d-flex justify-content-between align-items-center">
+                                <div>
+                                    <div class="fw-700 text-dark">@lab.LabTest?.Name</div>
+                                    <small class="text-muted">Patient: @lab.Patient?.FullName &bull; Sample: @lab.SampleBarcode</small>
+                                    @if (lab.IsAbnormal)
+                                    {
+                                        <div class="badge bg-danger-subtle text-danger mt-1">
+                                            <i class="fas fa-exclamation-circle me-1"></i>Abnormal: @lab.AbnormalFlag
+                                        </div>
+                                    }
+                                </div>
+                                <div class="d-flex align-items-center gap-2">
+                                    <a href="/Laboratory/Report/@lab.LabTestRequestId" target="_blank" class="btn btn-sm btn-outline-secondary rounded-pill px-2">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    @if (lab.Status == "Completed")
+                                    {
+                                        <form asp-controller="Laboratory" asp-action="VerifyReport" method="post">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="id" value="@lab.LabTestRequestId" />
+                                            <button type="submit" class="btn btn-sm btn-success rounded-pill px-3 fw-600">Verify</button>
+                                        </form>
+                                    }
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <div class="text-center py-4 text-muted">
+                        <i class="fas fa-flask fs-2 mb-2 d-block opacity-50"></i>
+                        <p class="mb-0">No new diagnostic laboratory results pending review.</p>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+

@@ -1,0 +1,34 @@
+﻿@model IEnumerable<HospitalManagementSystem.Models.Medicine>
+@{ ViewData["Title"] = "Pharmacy"; }
+<div class="page-header"><div><h1 class="page-title">Pharmacy</h1></div>
+<div class="d-flex gap-2">
+<a href="/Pharmacy/LowStock" class="btn btn-outline-warning"><i class="fas fa-exclamation-triangle me-1"></i>Low Stock (@ViewBag.LowStock)</a>
+<a href="/Pharmacy/Create" class="btn btn-primary"><i class="fas fa-plus me-2"></i>Add Medicine</a>
+</div></div>
+<div class="card mb-3"><div class="card-body py-3"><form method="get" class="row g-2 align-items-end">
+<div class="col-md-4"><input name="search" value="@ViewBag.Search" class="form-control" placeholder="Medicine name or batch..."/></div>
+<div class="col-md-3"><select name="category" class="form-select"><option value="">All Categories</option>@foreach(var c in ViewBag.Categories as List<string>??new List<string>()){<option value="@c" selected="@(ViewBag.Category==(string)c)">@c</option>}</select></div>
+<div class="col-md-2"><button type="submit" class="btn btn-primary w-100">Filter</button></div>
+<div class="col-md-2"><a href="/Pharmacy" class="btn btn-outline-secondary w-100">Clear</a></div>
+</form></div></div>
+<div class="card"><div class="card-body p-0">
+@if(!Model.Any()){<div class="empty-state"><i class="fas fa-pills"></i><h5>No medicines found</h5></div>}
+else{
+<div class="table-responsive"><table class="table"><thead><tr><th>Medicine</th><th>Category</th><th>Stock</th><th>Unit Price</th><th>Expiry</th><th>Status</th><th>Actions</th></tr></thead><tbody>
+@foreach(var m in Model){<tr>
+<td><div class="fw-600">@m.Name</div><div class="small text-muted">@m.Supplier @if(!string.IsNullOrEmpty(m.BatchNumber)){<span>| Batch: @m.BatchNumber</span>}</div></td>
+<td><span class="badge bg-light text-dark">@m.Category</span></td>
+<td>
+    <span class="fw-700 @(m.IsLowStock?"text-danger":"text-success")">@m.Quantity</span> @m.Unit
+    @if(m.IsLowStock){<span class="badge bg-danger ms-1">Low!</span>}
+</td>
+<td>₹@m.SellingPrice.ToString("N2")</td>
+<td class="small @(m.IsExpiringSoon?"text-danger":"")">@(m.ExpiryDate?.ToString("MMM yyyy")??"-") @if(m.IsExpiringSoon){<i class="fas fa-exclamation-triangle"></i>}</td>
+<td><span class="status-badge @(m.IsActive?"badge-active":"badge-inactive")">@(m.IsActive?"Active":"Inactive")</span></td>
+<td><div class="d-flex gap-1">
+<a href="/Pharmacy/Edit/@m.MedicineId" class="btn btn-sm btn-outline-primary btn-icon" title="Edit"><i class="fas fa-edit"></i></a>
+<a href="/Pharmacy/UpdateStock/@m.MedicineId" class="btn btn-sm btn-outline-success btn-icon" title="Update Stock"><i class="fas fa-boxes"></i></a>
+</div></td></tr>}
+</tbody></table></div>}
+</div></div>
+

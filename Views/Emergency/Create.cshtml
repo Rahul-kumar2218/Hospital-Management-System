@@ -1,0 +1,19 @@
+﻿@model HospitalManagementSystem.Models.EmergencyCase
+@{ ViewData["Title"] = "Register Emergency"; }
+<div class="page-header"><div><h1 class="page-title text-danger"><i class="fas fa-ambulance me-2"></i>Register Emergency Case</h1></div></div>
+<div class="card border-danger"><div class="card-header" style="border-bottom:2px solid #dc3545;"><span class="card-title text-danger">Emergency Registration</span></div><div class="card-body">
+<form asp-action="Create" method="post">@Html.AntiForgeryToken()
+<div asp-validation-summary="All" class="alert alert-danger"></div>
+<div class="row g-3">
+<div class="col-md-6"><label class="form-label">Patient (if registered)</label><select asp-for="PatientId" class="form-select"><option value="">Walk-in / Unknown</option>@foreach(var p in (ViewBag.Patients as List<HospitalManagementSystem.Models.Patient>)??new List<HospitalManagementSystem.Models.Patient>()){<option value="@p.PatientId">@p.FullName (@p.PatientCode)</option>}</select></div>
+<div class="col-md-6"><label asp-for="WalkInPatientName" class="form-label">Walk-in Patient Name</label><input asp-for="WalkInPatientName" class="form-control" placeholder="If not registered" /></div>
+<div class="col-md-6"><label asp-for="WalkInContact" class="form-label">Contact Number</label><input asp-for="WalkInContact" class="form-control" /></div>
+<div class="col-md-6"><label asp-for="EmergencyType" class="form-label"></label><input asp-for="EmergencyType" class="form-control" placeholder="e.g. Cardiac Arrest, Accident, Stroke" required /></div>
+<div class="col-md-4"><label asp-for="Priority" class="form-label"></label><select asp-for="Priority" class="form-select"><option value="Critical">🔴 Critical</option><option value="Serious">🟠 Serious</option><option value="Stable">🟢 Stable</option></select></div>
+<div class="col-md-4"><label class="form-label">Assigned Doctor</label><select asp-for="DoctorId" class="form-select"><option value="">Unassigned</option>@foreach(var d in (ViewBag.Doctors as List<HospitalManagementSystem.Models.Doctor>)??new List<HospitalManagementSystem.Models.Doctor>()){<option value="@d.DoctorId">@d.FullName</option>}</select></div>
+<div class="col-md-4"><label class="form-label">Assign Bed</label><select asp-for="BedId" class="form-select"><option value="">Not assigned</option>@foreach(var b in (ViewBag.Beds as List<HospitalManagementSystem.Models.Bed>)??new List<HospitalManagementSystem.Models.Bed>()){<option value="@b.BedId">@b.BedNumber (@b.Ward)</option>}</select></div>
+<div class="col-12"><label asp-for="Description" class="form-label">Description</label><textarea asp-for="Description" class="form-control" rows="2"></textarea></div>
+</div>
+<div class="d-flex gap-2 mt-4"><button type="submit" class="btn btn-danger"><i class="fas fa-ambulance me-2"></i>Register Emergency</button><a href="/Emergency" class="btn btn-outline-secondary">Cancel</a></div>
+</form></div></div>
+@section Scripts { @{ await Html.RenderPartialAsync("_ValidationScriptsPartial"); } }

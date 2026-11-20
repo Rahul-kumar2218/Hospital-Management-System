@@ -1,0 +1,16 @@
+﻿@model IEnumerable<HospitalManagementSystem.Models.Department>
+@{ ViewData["Title"] = "Departments"; }
+<div class="page-header"><div><h1 class="page-title">Departments</h1></div><a href="/Departments/Create" class="btn btn-primary"><i class="fas fa-plus me-2"></i>Add Department</a></div>
+<div class="row g-3">
+@foreach(var d in Model){
+<div class="col-md-6 col-lg-4"><div class="card h-100"><div class="card-body">
+    <div class="d-flex justify-content-between align-items-start">
+        <div><h6 class="fw-700 mb-1">@d.Name</h6><div class="small text-muted mb-2">@d.Description</div><div class="small"><i class="fas fa-user-md me-1 text-primary"></i>@d.Doctors.Count doctor(s)</div></div>
+        <span class="status-badge @(d.IsActive?"badge-active":"badge-inactive")">@(d.IsActive?"Active":"Inactive")</span>
+    </div>
+    <hr/><div class="d-flex gap-2">
+    <a href="/Departments/Edit/@d.DepartmentId" class="btn btn-sm btn-outline-primary"><i class="fas fa-edit me-1"></i>Edit</a>
+    <form method="post" action="/Departments/ToggleStatus/@d.DepartmentId">@Html.AntiForgeryToken()<button type="submit" class="btn btn-sm @(d.IsActive?"btn-outline-danger":"btn-outline-success")">@(d.IsActive?"Deactivate":"Activate")</button></form>
+    </div>
+</div></div></div>}
+</div>

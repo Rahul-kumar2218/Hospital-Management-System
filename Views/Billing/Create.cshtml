@@ -1,0 +1,40 @@
+﻿@model HospitalManagementSystem.ViewModels.BillCreateViewModel
+@{ ViewData["Title"] = "Create Bill"; }
+<div class="page-header"><div><h1 class="page-title">Create Bill</h1></div></div>
+<div class="card"><div class="card-header"><span class="card-title"><i class="fas fa-file-invoice-dollar me-2"></i>Bill Details</span></div><div class="card-body">
+<form asp-action="Create" method="post" id="billForm">@Html.AntiForgeryToken()
+<div asp-validation-summary="All" class="alert alert-danger"></div>
+<div class="row g-3">
+<div class="col-md-6"><label class="form-label">Patient *</label><select asp-for="PatientId" class="form-select" required><option value="">-- Select Patient --</option>@foreach(var p in Model.Patients??new List<HospitalManagementSystem.Models.Patient>()){<option value="@p.PatientId">@p.FullName (@p.PatientCode)</option>}</select></div>
+<div class="col-md-6"><label asp-for="PaymentMethod" class="form-label"></label><select asp-for="PaymentMethod" class="form-select"><option value="Cash">Cash</option><option value="Card">Card</option><option value="UPI">UPI</option><option value="Insurance">Insurance</option><option value="Cheque">Cheque</option></select></div>
+
+<div class="col-12"><div class="card bg-light"><div class="card-body"><div class="row g-3">
+<div class="col-md-4"><label class="form-label small fw-600">Consultation Charge</label><input asp-for="ConsultationCharge" type="number" step="0.01" class="form-control calc" oninput="calcTotal()"/></div>
+<div class="col-md-4"><label class="form-label small fw-600">Room Charges</label><input asp-for="RoomCharge" type="number" step="0.01" class="form-control calc" oninput="calcTotal()"/></div>
+<div class="col-md-4"><label class="form-label small fw-600">Medicine Charges</label><input asp-for="MedicineCharge" type="number" step="0.01" class="form-control calc" oninput="calcTotal()"/></div>
+<div class="col-md-4"><label class="form-label small fw-600">Lab Charges</label><input asp-for="LabCharge" type="number" step="0.01" class="form-control calc" oninput="calcTotal()"/></div>
+<div class="col-md-4"><label class="form-label small fw-600">Radiology Charges</label><input asp-for="RadiologyCharge" type="number" step="0.01" class="form-control calc" oninput="calcTotal()"/></div>
+<div class="col-md-4"><label class="form-label small fw-600">Other Charges</label><input asp-for="OtherCharges" type="number" step="0.01" class="form-control calc" oninput="calcTotal()"/></div>
+<div class="col-md-4"><label class="form-label small fw-600">Discount (-)</label><input asp-for="Discount" type="number" step="0.01" class="form-control calc" oninput="calcTotal()"/></div>
+<div class="col-md-4"><label class="form-label small fw-600">Tax (+)</label><input asp-for="Tax" type="number" step="0.01" class="form-control calc" oninput="calcTotal()"/></div>
+<div class="col-md-4"><label class="form-label small fw-600">Total Amount</label><input id="totalDisplay" type="text" class="form-control fw-700 fs-5 text-success bg-white" readonly value="₹0.00"/></div>
+</div></div></div></div>
+
+<div class="col-12"><label asp-for="Notes" class="form-label"></label><textarea asp-for="Notes" class="form-control" rows="2"></textarea></div>
+</div>
+<div class="d-flex gap-2 mt-4"><button type="submit" class="btn btn-success"><i class="fas fa-file-invoice-dollar me-2"></i>Generate Bill</button><a href="/Billing" class="btn btn-outline-secondary">Cancel</a></div>
+</form></div></div>
+@section Scripts {
+<script>
+function calcTotal() {
+    var fields = ['ConsultationCharge','RoomCharge','MedicineCharge','LabCharge','RadiologyCharge','OtherCharges'];
+    var total = 0;
+    fields.forEach(f => { total += parseFloat(document.querySelector('[name="'+f+'"]')?.value||0)||0; });
+    var disc = parseFloat(document.querySelector('[name="Discount"]')?.value||0)||0;
+    var tax = parseFloat(document.querySelector('[name="Tax"]')?.value||0)||0;
+    total = total - disc + tax;
+    document.getElementById('totalDisplay').value = '₹' + total.toFixed(2);
+}
+calcTotal();
+</script>
+}

@@ -1,0 +1,26 @@
+﻿@model IEnumerable<HospitalManagementSystem.Models.Bill>
+@{ ViewData["Title"] = "Billing"; }
+<div class="page-header"><div><h1 class="page-title">Billing & Payments</h1></div>
+<div class="d-flex gap-2">
+<a href="/Billing?status=Pending" class="btn btn-outline-warning">Pending</a>
+<a href="/Billing?status=Paid" class="btn btn-outline-success">Paid</a>
+<a href="/Billing/Create" class="btn btn-primary"><i class="fas fa-plus me-2"></i>Create Bill</a>
+</div></div>
+<div class="row g-3 mb-3">
+<div class="col-md-6"><div class="stat-card green"><div class="stat-card-icon green"><i class="fas fa-rupee-sign"></i></div><div class="stat-value">₹@(ViewBag.TotalRevenue?.ToString("N0")??0)</div><div class="stat-label">Total Revenue (Paid)</div></div></div>
+<div class="col-md-6"><div class="stat-card orange"><div class="stat-card-icon orange"><i class="fas fa-clock"></i></div><div class="stat-value">₹@(ViewBag.PendingAmount?.ToString("N0")??0)</div><div class="stat-label">Pending Amount</div></div></div>
+</div>
+<div class="card"><div class="card-body p-0">
+<div class="table-responsive"><table class="table"><thead><tr><th>Bill No.</th><th>Patient</th><th>Total</th><th>Paid</th><th>Method</th><th>Date</th><th>Status</th><th>Actions</th></tr></thead><tbody>
+@foreach(var b in Model){<tr>
+<td><span class="badge bg-primary-subtle text-primary">@b.BillCode</span></td>
+<td class="fw-600">@b.Patient?.FullName</td>
+<td class="fw-600">₹@b.TotalAmount.ToString("N0")</td>
+<td>₹@b.AmountPaid.ToString("N0")</td>
+<td><span class="badge bg-light text-dark">@(b.PaymentMethod??"-")</span></td>
+<td class="small">@b.CreatedAt.ToString("dd MMM yyyy")</td>
+<td><span class="status-badge @(b.PaymentStatus=="Paid"?"badge-paid":b.PaymentStatus=="Partial"?"badge-partial":"badge-pending")">@b.PaymentStatus</span></td>
+<td><a href="/Billing/Invoice/@b.BillId" class="btn btn-sm btn-outline-primary btn-icon" title="Invoice"><i class="fas fa-file-invoice"></i></a></td>
+</tr>}
+</tbody></table></div>
+</div></div>

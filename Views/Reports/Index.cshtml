@@ -1,0 +1,63 @@
+﻿@model HospitalManagementSystem.ViewModels.ReportFilterViewModel
+@{ ViewData["Title"] = "Reports"; }
+<div class="page-header"><div><h1 class="page-title">Reports & Analytics</h1></div><a href="/Reports/AuditLogs" class="btn btn-outline-secondary"><i class="fas fa-history me-1"></i>Audit Logs</a></div>
+
+<div class="card mb-4"><div class="card-header"><span class="card-title"><i class="fas fa-filter me-2"></i>Report Filter</span></div>
+<div class="card-body">
+<form method="post" asp-action="Index">@Html.AntiForgeryToken()
+<div class="row g-3 align-items-end">
+    <div class="col-md-3"><label asp-for="ReportType" class="form-label"></label><select asp-for="ReportType" class="form-select"><option value="Patient">Patient Report</option><option value="Appointment">Appointment Report</option><option value="Revenue">Revenue Report</option><option value="Expense">Expense Report</option><option value="Laboratory">Laboratory Report</option><option value="Pharmacy">Pharmacy/Stock Report</option></select></div>
+    <div class="col-md-2"><label asp-for="FromDate" class="form-label"></label><input asp-for="FromDate" type="date" class="form-control"/></div>
+    <div class="col-md-2"><label asp-for="ToDate" class="form-label"></label><input asp-for="ToDate" type="date" class="form-control"/></div>
+    <div class="col-md-2"><label class="form-label">Doctor</label><select asp-for="DoctorId" class="form-select"><option value="">All Doctors</option>@foreach(var d in Model.Doctors??new List<HospitalManagementSystem.Models.Doctor>()){<option value="@d.DoctorId">@d.FullName</option>}</select></div>
+    <div class="col-md-2"><label class="form-label">Dept.</label><select asp-for="DepartmentId" class="form-select"><option value="">All</option>@foreach(var d in Model.Departments??new List<HospitalManagementSystem.Models.Department>()){<option value="@d.DepartmentId">@d.Name</option>}</select></div>
+    <div class="col-md-1"><button type="submit" class="btn btn-primary w-100"><i class="fas fa-search"></i></button></div>
+</div>
+</form></div></div>
+
+@if(Model.ReportData != null) {
+<div class="card"><div class="card-header">
+    <span class="card-title">@Model.ReportType Report Results</span>
+    <button onclick="window.print()" class="btn btn-sm btn-outline-secondary no-print"><i class="fas fa-print me-1"></i>Print</button>
+</div><div class="card-body p-0">
+<div class="print-header text-center py-2"><h5>City General Hospital — @Model.ReportType Report | @(Model.FromDate?.ToString("dd MMM yyyy")??"All") to @(Model.ToDate?.ToString("dd MMM yyyy")??"Today")</h5></div>
+
+@if(Model.ReportType == "Patient") {
+var patients = (List<HospitalManagementSystem.Models.Patient>)Model.ReportData;
+<div class="p-3"><strong>Total Patients:</strong> @patients.Count</div>
+<div class="table-responsive"><table class="table"><thead><tr><th>ID</th><th>Name</th><th>Gender</th><th>Blood Group</th><th>Phone</th><th>Reg. Date</th></tr></thead><tbody>
+@foreach(var p in patients){<tr><td>@p.PatientCode</td><td>@p.FullName</td><td>@p.Gender</td><td>@(p.BloodGroup??"-")</td><td>@p.Phone</td><td>@p.RegistrationDate.ToString("dd MMM yyyy")</td></tr>}
+</tbody></table></div>
+} else if(Model.ReportType == "Revenue") {
+var bills = (List<HospitalManagementSystem.Models.Bill>)Model.ReportData;
+<div class="p-3 d-flex gap-4"><div><strong>Total Bills:</strong> @bills.Count</div><div><strong>Total Revenue:</strong> ₹@bills.Sum(b=>b.TotalAmount).ToString("N0")</div><div><strong>Collected:</strong> ₹@bills.Sum(b=>b.AmountPaid).ToString("N0")</div></div>
+<div class="table-responsive"><table class="table"><thead><tr><th>Bill No.</th><th>Patient</th><th>Total</th><th>Paid</th><th>Method</th><th>Status</th></tr></thead><tbody>
+@foreach(var b in bills){<tr><td>@b.BillCode</td><td>@b.Patient?.FullName</td><td>₹@b.TotalAmount.ToString("N0")</td><td>₹@b.AmountPaid.ToString("N0")</td><td>@(b.PaymentMethod??"-")</td><td>@b.PaymentStatus</td></tr>}
+</tbody></table></div>
+} else if(Model.ReportType == "Expense") {
+var expenses = (List<HospitalManagementSystem.Models.Expense>)Model.ReportData;
+<div class="p-3"><strong>Total Expenses:</strong> ₹@expenses.Sum(e=>e.Amount).ToString("N0")</div>
+<div class="table-responsive"><table class="table"><thead><tr><th>Description</th><th>Category</th><th>Amount</th><th>Date</th></tr></thead><tbody>
+@foreach(var e in expenses){<tr><td>@e.Description</td><td>@e.Category</td><td class="text-danger fw-600">₹@e.Amount.ToString("N0")</td><td>@e.ExpenseDate.ToString("dd MMM yyyy")</td></tr>}
+</tbody></table></div>
+} else if(Model.ReportType == "Laboratory") {
+var labs = (List<HospitalManagementSystem.Models.LabTestRequest>)Model.ReportData;
+<div class="p-3"><strong>Total Requests:</strong> @labs.Count | <strong>Completed:</strong> @labs.Count(l=>l.Status=="Completed")</div>
+<div class="table-responsive"><table class="table"><thead><tr><th>Code</th><th>Patient</th><th>Test</th><th>Status</th><th>Date</th></tr></thead><tbody>
+@foreach(var l in labs){<tr><td>@l.RequestCode</td><td>@l.Patient?.FullName</td><td>@l.LabTest?.Name</td><td>@l.Status</td><td>@l.RequestedAt.ToString("dd MMM")</td></tr>}
+</tbody></table></div>
+} else if(Model.ReportType == "Pharmacy") {
+var meds = (List<HospitalManagementSystem.Models.Medicine>)Model.ReportData;
+<div class="p-3"><strong>Total Medicines:</strong> @meds.Count | <strong>Low Stock:</strong> @meds.Count(m=>m.IsLowStock)</div>
+<div class="table-responsive"><table class="table"><thead><tr><th>Name</th><th>Category</th><th>Stock</th><th>Unit Price</th><th>Expiry</th></tr></thead><tbody>
+@foreach(var m in meds){<tr><td>@m.Name</td><td>@m.Category</td><td class="@(m.IsLowStock?"text-danger fw-700":"")">@m.Quantity @m.Unit</td><td>₹@m.SellingPrice.ToString("N2")</td><td class="@(m.IsExpiringSoon?"text-danger":"")">@(m.ExpiryDate?.ToString("MMM yyyy")??"-")</td></tr>}
+</tbody></table></div>
+} else {
+var apts = (List<HospitalManagementSystem.Models.Appointment>)Model.ReportData;
+<div class="p-3"><strong>Total Appointments:</strong> @apts.Count</div>
+<div class="table-responsive"><table class="table"><thead><tr><th>Code</th><th>Patient</th><th>Doctor</th><th>Department</th><th>Date</th><th>Status</th></tr></thead><tbody>
+@foreach(var a in apts){<tr><td>@a.AppointmentCode</td><td>@a.Patient?.FullName</td><td>@a.Doctor?.FullName</td><td>@a.Department?.Name</td><td>@a.AppointmentDate.ToString("dd MMM")</td><td>@a.Status</td></tr>}
+</tbody></table></div>}
+
+</div></div>}
+

@@ -1,0 +1,293 @@
+@model HospitalManagementSystem.Models.Patient
+@{
+    ViewData["Title"] = "Clinical Consultation";
+    var doctor = ViewBag.Doctor as HospitalManagementSystem.Models.Doctor;
+    var labTests = ViewBag.LabTests as List<HospitalManagementSystem.Models.LabTest> ?? new();
+    var medicines = ViewBag.Medicines as List<HospitalManagementSystem.Models.Medicine> ?? new();
+    var recentVitals = ViewBag.RecentVitals as List<HospitalManagementSystem.Models.VitalSign> ?? new();
+    var previousSoapNotes = ViewBag.PreviousSoapNotes as List<HospitalManagementSystem.Models.DoctorClinicalNote> ?? new();
+    int? appointmentId = ViewBag.AppointmentId;
+    int? opdRecordId = ViewBag.OPDRecordId;
+}
+
+<div class="d-flex align-items-center gap-2 mb-3">
+    <a asp-action="Workspace" class="btn btn-sm btn-outline-secondary rounded-pill px-3">&larr; Back to Workspace</a>
+    <span class="text-muted small">&bull; Outpatient Clinical Consultation &amp; Safe Prescribing</span>
+</div>
+
+<!-- PATIENT SUMMARY BANNER -->
+<div class="card border-0 shadow-sm mb-4" style="border-radius: 18px; background: #fff;">
+    <div class="card-body p-4">
+        <div class="row align-items-center g-3">
+            <div class="col-md-7 d-flex align-items-center gap-3">
+                <div class="bg-primary text-white rounded-circle p-3 d-flex align-items-center justify-content-center shadow" style="width:56px;height:56px; font-weight:800; font-size:22px;">
+                    @(Model.FullName.FirstOrDefault())
+                </div>
+                <div>
+                    <h3 class="fw-800 text-dark mb-1">@Model.FullName</h3>
+                    <div class="d-flex flex-wrap gap-2 text-muted small">
+                        <span><strong class="text-dark">ID:</strong> @Model.PatientCode</span> &bull;
+                        <span><strong class="text-dark">Age:</strong> @Model.Age Yrs (@Model.Gender)</span> &bull;
+                        <span><strong class="text-dark">Blood:</strong> <span class="badge bg-danger text-white">@(Model.BloodGroup ?? "N/A")</span></span> &bull;
+                        <span><strong class="text-dark">Phone:</strong> @Model.Phone</span>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-5 text-md-end">
+                <div class="small text-muted">Attending Clinician</div>
+                <div class="fw-700 text-primary">@doctor?.FullName</div>
+                <small class="text-muted">@doctor?.Department?.Name</small>
+            </div>
+        </div>
+
+        <!-- CLINICAL ALLERGY ALERT -->
+        @if (!string.IsNullOrEmpty(Model.Allergies))
+        {
+            <div class="alert alert-danger border-danger mt-3 mb-0 d-flex align-items-center gap-3 py-2 px-3 shadow-sm rounded-3">
+                <i class="fas fa-exclamation-triangle fs-3 text-danger"></i>
+                <div>
+                    <strong class="text-danger">⚠️ DOCUMENTED DRUG ALLERGIES:</strong>
+                    <span class="fw-700 fs-6 ms-1">@Model.Allergies</span>
+                    <div class="small text-danger opacity-90">Allergy cross-check active: verify all prescribed medicines to prevent adverse drug reactions.</div>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+<form asp-action="SaveConsultation" method="post" id="consultationForm">
+    @Html.AntiForgeryToken()
+    <input type="hidden" name="patientId" value="@Model.PatientId" />
+    <input type="hidden" name="appointmentId" value="@appointmentId" />
+    <input type="hidden" name="opdRecordId" value="@opdRecordId" />
+
+    <div class="row g-4 mb-4">
+        <!-- LEFT COLUMN: SOAP CLINICAL NOTES -->
+        <div class="col-lg-7">
+            <div class="card border-0 shadow-sm h-100" style="border-radius: 18px;">
+                <div class="card-header bg-transparent border-0 pt-4 px-4 pb-2 d-flex justify-content-between align-items-center">
+                    <h5 class="fw-800 text-dark mb-0"><i class="fas fa-notes-medical text-primary me-2"></i>SOAP Clinical Documentation</h5>
+                    <span class="badge bg-light text-muted border">Clinical Standard</span>
+                </div>
+                <div class="card-body p-4">
+                    <div class="mb-3">
+                        <label class="form-label small fw-700 text-primary">S &mdash; SUBJECTIVE (Patient Complaints &amp; History of Present Illness)</label>
+                        <textarea name="subjective" rows="3" class="form-control" placeholder="Patient states symptoms: fever, headache for 3 days, dry cough..." required></textarea>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label small fw-700 text-primary">O &mdash; OBJECTIVE (Clinical Examination &amp; Physical Observations)</label>
+                        <textarea name="objective" rows="2" class="form-control" placeholder="Chest clear on auscultation, throat congested, vitals stable..."></textarea>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label small fw-700 text-primary">A &mdash; ASSESSMENT (Primary Clinical Diagnosis)</label>
+                        <input type="text" name="assessment" class="form-control fw-600" placeholder="e.g. Acute Upper Respiratory Tract Infection" required />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label small fw-700 text-primary">P &mdash; PLAN (Treatment Strategy &amp; Non-Pharmacological Advice)</label>
+                        <textarea name="plan" rows="2" class="form-control" placeholder="Warm saline gargles, adequate hydration, rest for 3 days..."></textarea>
+                    </div>
+
+                    <div class="row g-2">
+                        <div class="col-md-6">
+                            <label class="form-label small fw-600">Follow-up Recommendation</label>
+                            <input type="date" name="followUpDate" class="form-control" min="@DateTime.Today.ToString("yyyy-MM-dd")" value="@DateTime.Today.AddDays(7).ToString("yyyy-MM-dd")" />
+                        </div>
+                    </div>
+
+                    <!-- AI CLINICAL DECISION SUPPORT DISCLAIMER -->
+                    <div class="p-3 mt-4 rounded-3 bg-light border text-muted small">
+                        <div class="d-flex align-items-center gap-2 mb-1">
+                            <i class="fas fa-robot text-primary"></i>
+                            <strong class="text-dark">Clinical Decision Support System (CDSS) Notice</strong>
+                        </div>
+                        Clinical suggestions and automatic cross-checks are intended solely as professional decision support. The licensed attending clinician retains sole legal and professional responsibility for final diagnosis and therapy.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- RIGHT COLUMN: RECENT VITALS & LAB ORDERING -->
+        <div class="col-lg-5">
+            <!-- RECENT VITALS -->
+            <div class="card border-0 shadow-sm mb-4" style="border-radius: 18px;">
+                <div class="card-header bg-transparent border-0 pt-4 px-4 pb-2">
+                    <h6 class="fw-800 text-dark mb-0"><i class="fas fa-heartbeat text-danger me-2"></i>Recent Vital Signs</h6>
+                </div>
+                <div class="card-body p-4 pt-2">
+                    @if (recentVitals.Any())
+                    {
+                        var latest = recentVitals.First();
+                        <div class="row g-2 text-center mb-3">
+                            <div class="col-4">
+                                <div class="bg-light p-2 rounded-3">
+                                    <small class="text-muted d-block">Temp</small>
+                                    <strong class="text-dark">@latest.Temperature°F</strong>
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <div class="bg-light p-2 rounded-3">
+                                    <small class="text-muted d-block">BP</small>
+                                    <strong class="text-dark">@latest.BloodPressureSystolic/@latest.BloodPressureDiastolic</strong>
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <div class="bg-light p-2 rounded-3">
+                                    <small class="text-muted d-block">SpO2</small>
+                                    <strong class="text-success">@latest.OxygenSaturation%</strong>
+                                </div>
+                            </div>
+                        </div>
+                        <small class="text-muted">Recorded by @latest.RecordedByNurseName &middot; @latest.RecordedAt.ToString("dd MMM yyyy, hh:mm tt")</small>
+                    }
+                    else
+                    {
+                        <div class="text-muted small py-2">No pre-consultation vitals recorded today.</div>
+                    }
+                </div>
+            </div>
+
+            <!-- ORDER LAB TESTS -->
+            <div class="card border-0 shadow-sm" style="border-radius: 18px;">
+                <div class="card-header bg-transparent border-0 pt-4 px-4 pb-2">
+                    <h6 class="fw-800 text-dark mb-0"><i class="fas fa-flask text-info me-2"></i>Order Diagnostic Investigations</h6>
+                </div>
+                <div class="card-body p-4 pt-2">
+                    <p class="small text-muted mb-2">Select tests to automatically dispatch requisition to laboratory:</p>
+                    <div style="max-height: 220px; overflow-y: auto;">
+                        @foreach (var test in labTests)
+                        {
+                            <div class="form-check py-1 border-bottom">
+                                <input class="form-check-input" type="checkbox" name="requestedLabTestIds" value="@test.LabTestId" id="test-@test.LabTestId">
+                                <label class="form-check-label small d-flex justify-content-between" for="test-@test.LabTestId">
+                                    <span>@test.Name</span>
+                                    <span class="text-muted">₹@test.Price.ToString("N0")</span>
+                                </label>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- PRESCRIPTION BUILDER WITH REAL-TIME ALLERGY SAFETY GUARD -->
+    <div class="card border-0 shadow-sm mb-4" style="border-radius: 18px;">
+        <div class="card-header bg-transparent border-0 pt-4 px-4 pb-2 d-flex justify-content-between align-items-center">
+            <div>
+                <h5 class="fw-800 text-dark mb-1"><i class="fas fa-file-prescription text-success me-2"></i>Digital Prescription Builder (Rx)</h5>
+                <small class="text-muted">Add medications with automated allergy cross-checking and clear dosage schedules.</small>
+            </div>
+            <button type="button" class="btn btn-sm btn-success rounded-pill px-3 fw-600" onclick="addMedicationRow()">
+                <i class="fas fa-plus me-1"></i> Add Medication
+            </button>
+        </div>
+        <div class="card-body p-4">
+            <div class="table-responsive">
+                <table class="table table-bordered align-middle" id="rxTable">
+                    <thead class="table-light small">
+                        <tr>
+                            <th style="width: 30%;">Medicine Name *</th>
+                            <th style="width: 15%;">Dosage</th>
+                            <th style="width: 20%;">Frequency</th>
+                            <th style="width: 15%;">Duration</th>
+                            <th style="width: 15%;">Instructions</th>
+                            <th style="width: 5%;"></th>
+                        </tr>
+                    </thead>
+                    <tbody id="rxTableBody">
+                        <tr class="rx-row">
+                            <td>
+                                <input type="text" name="prescriptionItems[0].MedicineName" class="form-control form-control-sm med-input" placeholder="e.g. Paracetamol 500mg" required oninput="checkRowAllergy(this)" list="medList" />
+                                <div class="allergy-alert-msg text-danger small fw-bold mt-1" style="display:none;"></div>
+                            </td>
+                            <td><input type="text" name="prescriptionItems[0].Dosage" class="form-control form-control-sm" placeholder="1 tablet" value="1 tablet" /></td>
+                            <td>
+                                <select name="prescriptionItems[0].Frequency" class="form-select form-select-sm">
+                                    <option value="Once Daily (OD)">Once Daily (OD)</option>
+                                    <option value="Twice Daily (BD)" selected>Twice Daily (BD)</option>
+                                    <option value="Thrice Daily (TDS)">Thrice Daily (TDS)</option>
+                                    <option value="Four Times Daily (QID)">Four Times Daily (QID)</option>
+                                    <option value="As Needed (SOS)">As Needed (SOS)</option>
+                                </select>
+                            </td>
+                            <td><input type="text" name="prescriptionItems[0].Duration" class="form-control form-control-sm" placeholder="5 days" value="5 days" /></td>
+                            <td><input type="text" name="prescriptionItems[0].Instructions" class="form-control form-control-sm" placeholder="After meals" value="After meals" /></td>
+                            <td class="text-center">
+                                <button type="button" class="btn btn-sm btn-outline-danger py-0 px-2" onclick="removeRow(this)"><i class="fas fa-trash"></i></button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <datalist id="medList">
+                @foreach (var med in medicines)
+                {
+                    <option value="@med.Name">@med.Category &middot; Batch: @med.BatchNumber</option>
+                }
+            </datalist>
+        </div>
+    </div>
+
+    <!-- ACTION BUTTONS -->
+    <div class="d-flex justify-content-end gap-3 pb-5">
+        <a asp-action="Workspace" class="btn btn-light rounded-pill px-4">Cancel</a>
+        <button type="submit" class="btn btn-primary btn-lg rounded-pill px-5 fw-800 shadow">
+            <i class="fas fa-check-double me-2"></i> Finalize Consultation &amp; Issue Orders
+        </button>
+    </div>
+</form>
+
+@section Scripts {
+<script>
+var rowIdx = 1;
+var patientId = @Model.PatientId;
+
+function addMedicationRow() {
+    var tbody = document.getElementById('rxTableBody');
+    var tr = document.createElement('tr');
+    tr.className = 'rx-row';
+    tr.innerHTML = `
+        <td>
+            <input type="text" name="prescriptionItems[${rowIdx}].MedicineName" class="form-control form-control-sm med-input" placeholder="e.g. Amoxicillin 250mg" required oninput="checkRowAllergy(this)" list="medList" />
+            <div class="allergy-alert-msg text-danger small fw-bold mt-1" style="display:none;"></div>
+        </td>
+        <td><input type="text" name="prescriptionItems[${rowIdx}].Dosage" class="form-control form-control-sm" placeholder="1 tablet" value="1 tablet" /></td>
+        <td>
+            <select name="prescriptionItems[${rowIdx}].Frequency" class="form-select form-select-sm">
+                <option value="Once Daily (OD)">Once Daily (OD)</option>
+                <option value="Twice Daily (BD)" selected>Twice Daily (BD)</option>
+                <option value="Thrice Daily (TDS)">Thrice Daily (TDS)</option>
+                <option value="Four Times Daily (QID)">Four Times Daily (QID)</option>
+                <option value="As Needed (SOS)">As Needed (SOS)</option>
+            </select>
+        </td>
+        <td><input type="text" name="prescriptionItems[${rowIdx}].Duration" class="form-control form-control-sm" placeholder="5 days" value="5 days" /></td>
+        <td><input type="text" name="prescriptionItems[${rowIdx}].Instructions" class="form-control form-control-sm" placeholder="After meals" value="After meals" /></td>
+        <td class="text-center">
+            <button type="button" class="btn btn-sm btn-outline-danger py-0 px-2" onclick="removeRow(this)"><i class="fas fa-trash"></i></button>
+        </td>
+    `;
+    tbody.appendChild(tr);
+    rowIdx++;
+}
+
+function removeRow(btn) {
+    var row = btn.closest('tr');
+    var tbody = document.getElementById('rxTableBody');
+    if (tbody.rows.length > 1) {
+        row.remove();
+    }
+}
+
+function checkRowAllergy(input) {
+    var medName = input.value.trim();
+    var row = input.closest('tr');
+    checkPrescriptionAllergy(patientId, medName, row);
+}
+</script>
+}
+

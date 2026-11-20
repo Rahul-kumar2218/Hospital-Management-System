@@ -1,0 +1,10 @@
+﻿@model IEnumerable<HospitalManagementSystem.Models.EmergencyCase>
+@{ ViewData["Title"] = "Emergency History"; }
+<div class="page-header"><div><h1 class="page-title">Emergency History</h1></div><a href="/Emergency" class="btn btn-outline-primary">Active Cases</a></div>
+<div class="card"><div class="card-body p-0">
+<div class="table-responsive"><table class="table"><thead><tr><th>Code</th><th>Patient</th><th>Type</th><th>Priority</th><th>Arrived</th><th>Status</th></tr></thead><tbody>
+@foreach(var e in Model){<tr><td>@e.CaseCode</td><td>@(e.Patient?.FullName??e.WalkInPatientName??"Walk-in")</td><td>@e.EmergencyType</td>
+<td><span class="badge bg-@(e.Priority=="Critical"?"danger":e.Priority=="Serious"?"warning":"success")">@e.Priority</span></td>
+<td class="small">@e.ArrivalTime.ToLocalTime().ToString("dd MMM HH:mm")</td>
+<td><span class="badge bg-secondary">@e.TreatmentStatus</span></td></tr>}
+</tbody></table></div></div></div>

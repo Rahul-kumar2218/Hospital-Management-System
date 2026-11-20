@@ -1,0 +1,30 @@
+﻿@model IEnumerable<HospitalManagementSystem.Models.BloodBank>
+@{ ViewData["Title"] = "Blood Bank"; }
+<div class="page-header"><div><h1 class="page-title"><i class="fas fa-tint me-2 text-danger"></i>Blood Bank</h1></div>
+<div class="d-flex gap-2"><a href="/BloodBank/Donors" class="btn btn-outline-danger"><i class="fas fa-users me-1"></i>Donors</a><a href="/BloodBank/AddDonor" class="btn btn-danger"><i class="fas fa-plus me-2"></i>Register Donor</a></div></div>
+<div class="row g-3 mb-4">
+@foreach(var b in Model){
+<div class="col-6 col-md-3">
+<div class="blood-group-card">
+    <div class="blood-group-label">@b.BloodGroup</div>
+    <div class="blood-units">@b.UnitsAvailable</div>
+    <div class="blood-units-label">Units Available</div>
+    @if(b.UnitsAvailable < 5){<span class="badge bg-danger mt-1">Critical Low!</span>}
+    else if(b.UnitsAvailable < 10){<span class="badge bg-warning text-dark mt-1">Low Stock</span>}
+    <div class="mt-2">
+    <form method="post" action="/BloodBank/IssueBlood" class="d-flex gap-1 justify-content-center">@Html.AntiForgeryToken()
+    <input type="hidden" name="bloodGroup" value="@b.BloodGroup"/>
+    <input type="number" name="units" class="form-control form-control-sm" style="width:60px;" min="1" max="@b.UnitsAvailable" placeholder="1"/>
+    <button type="submit" class="btn btn-sm btn-outline-danger">Issue</button>
+    </form>
+    </div>
+</div></div>}
+</div>
+
+@if(ViewBag.RecentDonors != null && ((List<HospitalManagementSystem.Models.BloodDonor>)ViewBag.RecentDonors).Any()){
+<div class="card"><div class="card-header"><span class="card-title">Recent Donors</span><a href="/BloodBank/Donors" class="btn btn-sm btn-outline-danger">All Donors</a></div>
+<div class="card-body p-0"><div class="table-responsive"><table class="table"><thead><tr><th>Donor</th><th>Blood Group</th><th>Units</th><th>Phone</th><th>Date</th></tr></thead><tbody>
+@foreach(var d in (List<HospitalManagementSystem.Models.BloodDonor>)ViewBag.RecentDonors){
+<tr><td class="fw-600">@d.DonorName</td><td><span class="badge" style="background:#f8d7da;color:#721c24;">@d.BloodGroup</span></td><td>@d.UnitsDonated</td><td>@d.Phone</td><td class="small">@d.RegisteredAt.ToLocalTime().ToString("dd MMM yyyy")</td></tr>}
+</tbody></table></div></div></div>}
+

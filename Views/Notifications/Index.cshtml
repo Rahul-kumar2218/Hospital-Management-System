@@ -1,0 +1,23 @@
+﻿@model IEnumerable<HospitalManagementSystem.Models.Notification>
+@{ ViewData["Title"] = "Notifications"; }
+<div class="page-header"><div><h1 class="page-title">Notifications</h1></div>
+<form method="post" action="/Notifications/MarkAllRead">@Html.AntiForgeryToken()<button type="submit" class="btn btn-outline-secondary"><i class="fas fa-check-double me-1"></i>Mark All Read</button></form></div>
+<div class="card"><div class="card-body p-0">
+@if(!Model.Any()){<div class="empty-state"><i class="fas fa-bell-slash"></i><h5>No notifications</h5></div>}
+else {
+@foreach(var n in Model){
+<div class="d-flex align-items-start gap-3 p-3 border-bottom @(n.IsRead?"":"bg-primary-subtle")">
+    <div class="mt-1" style="width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:@(n.Type=="Danger"?"#f8d7da":n.Type=="Warning"?"#fff3cd":n.Type=="Success"?"#d4edda":"#cce5ff");font-size:14px;">
+        <i class="fas fa-@(n.Type=="Danger"?"exclamation-circle text-danger":n.Type=="Warning"?"exclamation-triangle text-warning":n.Type=="Success"?"check-circle text-success":"info-circle text-primary")"></i>
+    </div>
+    <div class="flex-grow-1">
+        <div class="fw-600">@n.Title</div>
+        <div class="small text-muted">@n.Message</div>
+        <div class="small text-muted mt-1">@n.CreatedAt.ToLocalTime().ToString("dd MMM yyyy, HH:mm")</div>
+    </div>
+    @if(!n.IsRead){
+    <form method="post" action="/Notifications/MarkRead/@n.NotificationId">@Html.AntiForgeryToken()
+    <button type="submit" class="btn btn-sm btn-outline-primary">Mark Read</button></form>}
+</div>}
+}
+</div></div>

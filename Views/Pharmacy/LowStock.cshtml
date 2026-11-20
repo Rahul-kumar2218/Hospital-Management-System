@@ -1,0 +1,13 @@
+﻿@model IEnumerable<HospitalManagementSystem.Models.Medicine>
+@{ ViewData["Title"] = "Low Stock Alert"; }
+<div class="page-header"><div><h1 class="page-title text-danger"><i class="fas fa-exclamation-triangle me-2"></i>Low Stock Alert</h1></div><a href="/Pharmacy" class="btn btn-outline-primary">Back</a></div>
+<div class="card"><div class="card-body p-0">
+<div class="table-responsive"><table class="table"><thead><tr><th>Medicine</th><th>Current Stock</th><th>Min. Level</th><th>Category</th><th>Action</th></tr></thead><tbody>
+@foreach(var m in Model){<tr>
+<td class="fw-600">@m.Name<div class="small text-muted">@m.Supplier</div></td>
+<td><span class="fw-700 text-danger fs-5">@m.Quantity</span> @m.Unit</td>
+<td>@m.MinStockLevel @m.Unit</td>
+<td><span class="badge bg-light text-dark">@m.Category</span></td>
+<td><a href="/Pharmacy/UpdateStock/@m.MedicineId" class="btn btn-sm btn-primary"><i class="fas fa-plus me-1"></i>Restock</a></td>
+</tr>}
+</tbody></table></div></div></div>

@@ -1,0 +1,99 @@
+@model HospitalManagementSystem.ViewModels.RecordVitalsInputModel
+@{
+    ViewData["Title"] = "Record Inpatient Vitals";
+    var patient = ViewBag.Patient as HospitalManagementSystem.Models.Patient;
+}
+
+<div class="row justify-content-center">
+    <div class="col-lg-7">
+        <div class="d-flex align-items-center gap-2 mb-3">
+            <a asp-action="Station" class="btn btn-sm btn-outline-secondary rounded-pill px-3">&larr; Back to Station</a>
+            <span class="text-muted small">&bull; Clinical Vitals Charting</span>
+        </div>
+
+        <div class="card border-0 shadow-sm" style="border-radius: 18px; overflow:hidden;">
+            <div class="card-header p-4" style="background: linear-gradient(135deg, #ef4444, #f97316); color:#fff;">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="bg-white rounded-circle p-3 text-danger shadow-sm">
+                        <i class="fas fa-heartbeat fs-3"></i>
+                    </div>
+                    <div>
+                        <h4 class="fw-800 mb-1">Chart Inpatient Vital Signs</h4>
+                        <p class="mb-0 opacity-90 small">Recording parameters for @patient?.FullName (ID: @patient?.PatientCode)</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card-body p-4 p-md-5">
+                <form asp-action="RecordVitals" method="post">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" asp-for="PatientId" />
+                    <input type="hidden" asp-for="AdmissionId" />
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label asp-for="Temperature" class="form-label small fw-700">Temperature (°F) *</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light"><i class="fas fa-thermometer-half text-danger"></i></span>
+                                <input asp-for="Temperature" class="form-control" step="0.1" required />
+                            </div>
+                            <span asp-validation-for="Temperature" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="PulseRate" class="form-label small fw-700">Pulse / Heart Rate (bpm) *</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light"><i class="fas fa-heart text-danger"></i></span>
+                                <input asp-for="PulseRate" class="form-control" required />
+                            </div>
+                            <span asp-validation-for="PulseRate" class="text-danger small"></span>
+                        </div>
+                    </div>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label small fw-700">Blood Pressure (Systolic / Diastolic) *</label>
+                            <div class="input-group">
+                                <input asp-for="BloodPressureSystolic" class="form-control" placeholder="120" required />
+                                <span class="input-group-text">/</span>
+                                <input asp-for="BloodPressureDiastolic" class="form-control" placeholder="80" required />
+                                <span class="input-group-text small">mmHg</span>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="OxygenSaturation" class="form-label small fw-700">Oxygen Saturation (SpO2 %) *</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light"><i class="fas fa-lungs text-primary"></i></span>
+                                <input asp-for="OxygenSaturation" class="form-control" step="0.1" required />
+                                <span class="input-group-text">%</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label asp-for="RespiratoryRate" class="form-label small fw-700">Respiratory Rate (/min)</label>
+                            <input asp-for="RespiratoryRate" class="form-control" required />
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="PainScore" class="form-label small fw-700">Pain Score (0 - 10)</label>
+                            <input asp-for="PainScore" type="number" min="0" max="10" class="form-control" />
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label asp-for="Notes" class="form-label small fw-700">Clinical Observations / Notes</label>
+                        <textarea asp-for="Notes" rows="3" class="form-control" placeholder="Patient resting comfortably, skin warm and dry..."></textarea>
+                    </div>
+
+                    <div class="d-flex justify-content-end gap-2">
+                        <a asp-action="Station" class="btn btn-light rounded-pill px-4">Cancel</a>
+                        <button type="submit" class="btn btn-danger rounded-pill px-5 fw-700 shadow-sm">
+                            <i class="fas fa-save me-1"></i> Save Vitals Record
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+

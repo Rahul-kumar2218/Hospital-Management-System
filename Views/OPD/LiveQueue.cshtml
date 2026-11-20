@@ -1,0 +1,237 @@
+@model List<HospitalManagementSystem.Models.OPDRecord>
+@{
+    Layout = null;
+    var servingList = Model.Where(m => m.Status == "In Consultation" || m.Status == "Serving").ToList();
+    var waitingList = Model.Where(m => m.Status == "Waiting").OrderBy(m => m.TokenNumber).ToList();
+    var completedCount = Model.Count(m => m.Status == "Completed");
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="refresh" content="12" />
+    <title>OPD Live Queue Board - Hospital Waiting Hall Display</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+    <style>
+        :root {
+            --bs-body-bg: #0b1329;
+            --bs-body-color: #f1f5f9;
+        }
+        body {
+            background-color: var(--bs-body-bg);
+            color: var(--bs-body-color);
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden;
+        }
+        .header-bar {
+            background: linear-gradient(90deg, #0d3b66, #1d4ed8);
+            padding: 1rem 2rem;
+            border-bottom: 3px solid #38bdf8;
+        }
+        .token-card {
+            background: #1e293b;
+            border-radius: 16px;
+            border: 2px solid #334155;
+            transition: all 0.3s ease;
+        }
+        .token-card.serving {
+            border-color: #22c55e;
+            background: linear-gradient(145deg, #14532d, #0f172a);
+            box-shadow: 0 0 25px rgba(34, 197, 94, 0.35);
+        }
+        .token-number {
+            font-size: 3.5rem;
+            font-weight: 900;
+            line-height: 1;
+            letter-spacing: -1px;
+        }
+        .badge-serving {
+            background-color: #22c55e;
+            color: #ffffff;
+            font-size: 1rem;
+            padding: 0.4rem 0.8rem;
+            animation: pulse-green 2s infinite;
+        }
+        @@keyframes pulse-green {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.85; transform: scale(1.05); }
+        }
+        .clock-display {
+            font-family: monospace;
+            font-size: 1.5rem;
+            letter-spacing: 2px;
+        }
+        .footer-ticker {
+            background: #0284c7;
+            color: #ffffff;
+            font-weight: 600;
+            padding: 0.6rem 1rem;
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+    <!-- Top Header -->
+    <header class="header-bar d-flex justify-content-between align-items-center">
+        <div class="d-flex align-items-center gap-3">
+            <i class="fas fa-hospital-symbol fa-2x text-info"></i>
+            <div>
+                <h2 class="mb-0 fw-bold tracking-tight">CITY GENERAL HOSPITAL</h2>
+                <div class="text-info-emphasis small fw-semibold">OPD REAL-TIME QUEUE MONITORING SYSTEM</div>
+            </div>
+        </div>
+        <div class="text-end d-flex align-items-center gap-4">
+            <div class="d-none d-md-block">
+                <div class="text-white-50 small">@ViewBag.TodayDate</div>
+                <div id="liveClock" class="clock-display fw-bold text-warning">--:--:--</div>
+            </div>
+            <a href="/Dashboard" class="btn btn-sm btn-outline-light d-print-none" title="Return to Portal">
+                <i class="fas fa-arrow-left me-1"></i>Portal
+            </a>
+        </div>
+    </header>
+
+    <main class="container-fluid py-4 px-4 pb-5">
+        <!-- Live Counters Bar -->
+        <div class="row g-3 mb-4">
+            <div class="col-md-4">
+                <div class="p-3 bg-dark rounded-3 border border-secondary text-center">
+                    <div class="small text-white-50">NOW CONSULTING</div>
+                    <div class="h2 mb-0 fw-bold text-success">@servingList.Count</div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="p-3 bg-dark rounded-3 border border-secondary text-center">
+                    <div class="small text-white-50">PATIENTS WAITING</div>
+                    <div class="h2 mb-0 fw-bold text-warning">@waitingList.Count</div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="p-3 bg-dark rounded-3 border border-secondary text-center">
+                    <div class="small text-white-50">COMPLETED TODAY</div>
+                    <div class="h2 mb-0 fw-bold text-info">@completedCount</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-4">
+            <!-- Currently Serving / Now Calling -->
+            <div class="col-lg-7">
+                <div class="d-flex align-items-center justify-content-between mb-3">
+                    <h3 class="h4 mb-0 fw-bold text-success">
+                        <i class="fas fa-volume-high me-2 fa-beat"></i>NOW CALLING / IN CONSULTATION
+                    </h3>
+                    <span class="badge badge-serving">Active Chambers</span>
+                </div>
+
+                @if (servingList.Any())
+                {
+                    <div class="row g-3">
+                        @foreach (var rec in servingList)
+                        {
+                            <div class="col-md-6">
+                                <div class="token-card serving p-4 h-100 text-center">
+                                    <div class="small text-uppercase text-success-emphasis fw-bold mb-1">
+                                        <i class="fas fa-stethoscope me-1"></i>@(rec.Doctor?.Department?.Name ?? "OPD")
+                                    </div>
+                                    <div class="token-number text-success my-2">#@rec.TokenNumber</div>
+                                    <div class="fs-4 fw-bold text-white mb-1">@rec.Patient?.FullName</div>
+                                    <div class="text-white-50 small mb-2">Patient ID: @rec.Patient?.PatientCode</div>
+                                    <div class="border-top border-secondary pt-2 mt-2">
+                                        <div class="fw-semibold text-info">Dr. @(rec.Doctor?.FullName ?? "Physician")</div>
+                                        <div class="small text-muted">Room: @(rec.Doctor?.Department?.Name ?? "Chamber 1")</div>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <div class="token-card p-5 text-center text-muted">
+                        <i class="fas fa-clock fa-3x mb-3 text-secondary"></i>
+                        <h4>No Consultation Currently in Progress</h4>
+                        <p class="text-secondary mb-0">Next patient will be summoned shortly. Please watch this screen.</p>
+                    </div>
+                }
+            </div>
+
+            <!-- Next In Queue List -->
+            <div class="col-lg-5">
+                <div class="d-flex align-items-center justify-content-between mb-3">
+                    <h3 class="h4 mb-0 fw-bold text-warning">
+                        <i class="fas fa-users-line me-2"></i>NEXT IN QUEUE
+                    </h3>
+                    <span class="badge bg-warning text-dark">Estimated Turn</span>
+                </div>
+
+                <div class="token-card p-3">
+                    @if (waitingList.Any())
+                    {
+                        <div class="list-group list-group-flush bg-transparent">
+                            @foreach (var rec in waitingList.Take(8))
+                            {
+                                <div class="list-group-item bg-transparent text-white border-secondary d-flex justify-content-between align-items-center py-3">
+                                    <div class="d-flex align-items-center gap-3">
+                                        <span class="badge bg-primary fs-5 px-3 py-2">#@rec.TokenNumber</span>
+                                        <div>
+                                            <div class="fw-bold fs-5">@rec.Patient?.FullName</div>
+                                            <div class="small text-secondary">
+                                                Dr. @(rec.Doctor?.FullName ?? "-") • @(rec.Doctor?.Department?.Name ?? "OPD")
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="text-end">
+                                        <span class="badge bg-secondary-subtle text-light border border-secondary">Waiting</span>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                        @if (waitingList.Count > 8)
+                        {
+                            <div class="text-center text-secondary small pt-3">
+                                + @(waitingList.Count - 8) more patients waiting in queue
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <div class="text-center py-5 text-muted">
+                            <i class="fas fa-check-circle fa-2x text-success mb-2"></i>
+                            <p class="mb-0">No other patients currently waiting in line.</p>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Bottom Ticker -->
+    <div class="footer-ticker d-flex justify-content-between align-items-center px-4">
+        <div>
+            <i class="fas fa-bullhorn me-2"></i>
+            <span>PATIENT ANNOUNCEMENT: Please keep your registration slip and token ready. Patients with severe emergencies report directly to Triage (Casualty).</span>
+        </div>
+        <div class="small text-light d-none d-sm-block">
+            Auto-refreshing every 12 seconds • Powered by Smart Hospital Platform
+        </div>
+    </div>
+
+    <script>
+        function updateClock() {
+            const now = new Date();
+            const timeStr = now.toLocaleTimeString('en-US', { hour12: false });
+            document.getElementById('liveClock').textContent = timeStr;
+        }
+        setInterval(updateClock, 1000);
+        updateClock();
+    </script>
+</body>
+</html>
+

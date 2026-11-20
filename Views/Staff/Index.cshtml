@@ -1,0 +1,24 @@
+﻿@model IEnumerable<HospitalManagementSystem.Models.Staff>
+@{ ViewData["Title"] = "Staff"; }
+<div class="page-header"><div><h1 class="page-title">Staff Management</h1></div><a href="/Staff/Create" class="btn btn-primary"><i class="fas fa-plus me-2"></i>Add Staff</a></div>
+<div class="card mb-3"><div class="card-body py-3"><form method="get" class="row g-2 align-items-end">
+<div class="col-md-4"><input name="search" value="@ViewBag.Search" class="form-control" placeholder="Name or email..."/></div>
+<div class="col-md-3"><select name="role" class="form-select"><option value="">All Roles</option>@foreach(var r in new[]{"Nurse","Receptionist","LabTechnician","Pharmacist","Admin"}){<option value="@r" selected="@(ViewBag.Role==(string)r)">@r</option>}</select></div>
+<div class="col-md-2"><button type="submit" class="btn btn-primary w-100">Filter</button></div>
+</form></div></div>
+<div class="card"><div class="card-body p-0">
+<div class="table-responsive"><table class="table"><thead><tr><th>Name</th><th>Role</th><th>Department</th><th>Phone</th><th>Join Date</th><th>Status</th><th>Actions</th></tr></thead><tbody>
+@foreach(var s in Model){<tr>
+<td><div class="fw-600">@s.FullName</div><div class="small text-muted">@s.Email</div></td>
+<td><span class="badge bg-primary-subtle text-primary">@s.Role</span></td>
+<td>@(s.Department?.Name??"-")</td>
+<td>@(s.Phone??"-")</td>
+<td class="small">@(s.JoiningDate.ToString("dd MMM yyyy"))</td>
+<td><span class="status-badge @(s.IsActive?"badge-active":"badge-inactive")">@(s.IsActive?"Active":"Inactive")</span></td>
+<td><div class="d-flex gap-1">
+<a href="/Staff/Edit/@s.StaffId" class="btn btn-sm btn-outline-primary btn-icon"><i class="fas fa-edit"></i></a>
+<form method="post" action="/Staff/ToggleStatus/@s.StaffId">@Html.AntiForgeryToken()<button type="submit" class="btn btn-sm @(s.IsActive?"btn-outline-danger":"btn-outline-success") btn-icon"><i class="fas @(s.IsActive?"fa-ban":"fa-check")"></i></button></form>
+</div></td></tr>}
+</tbody></table></div></div></div>
+
+

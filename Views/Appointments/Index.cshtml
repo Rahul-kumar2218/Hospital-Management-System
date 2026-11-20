@@ -1,0 +1,55 @@
+@model IEnumerable<HospitalManagementSystem.Models.Appointment>
+@{ ViewData["Title"] = "Appointments"; }
+<div class="page-header">
+    <div><nav aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="/Dashboard">Dashboard</a></li><li class="breadcrumb-item active">Appointments</li></ol></nav>
+    <h1 class="page-title">Appointment Management</h1><p class="page-subtitle">@ViewBag.Total total appointments</p></div>
+    <a href="/Appointments/Create" class="btn btn-primary"><i class="fas fa-plus me-2"></i>Book Appointment</a>
+</div>
+<div class="card mb-3"><div class="card-body py-3">
+    <form method="get" class="row g-2 align-items-end">
+        <div class="col-md-3"><input name="search" value="@ViewBag.Search" class="form-control" placeholder="Patient or Doctor name..." /></div>
+        <div class="col-md-2"><select name="status" class="form-select"><option value="">All Statuses</option><option value="Pending">Pending</option><option value="Confirmed">Confirmed</option><option value="Completed">Completed</option><option value="Cancelled">Cancelled</option></select></div>
+        <div class="col-md-2"><input name="fromDate" type="date" class="form-control" value="@ViewBag.FromDate" /></div>
+        <div class="col-md-2"><input name="toDate" type="date" class="form-control" value="@ViewBag.ToDate" /></div>
+        <div class="col-md-1"><button type="submit" class="btn btn-primary w-100"><i class="fas fa-search"></i></button></div>
+        <div class="col-md-1"><a href="/Appointments" class="btn btn-outline-secondary w-100">Clear</a></div>
+    </form>
+</div></div>
+<div class="card"><div class="card-body p-0">
+@if (!Model.Any()) { <div class="empty-state"><i class="fas fa-calendar-times"></i><h5>No appointments found</h5></div> }
+else {
+<div class="table-responsive"><table class="table">
+    <thead><tr><th>Code</th><th>Patient</th><th>Doctor</th><th>Department</th><th>Date</th><th>Time</th><th>Status</th><th>Actions</th></tr></thead>
+    <tbody>
+    @foreach(var a in Model) {
+    <tr>
+        <td><span class="badge bg-primary-subtle text-primary">@a.AppointmentCode</span></td>
+        <td>@a.Patient?.FullName</td>
+        <td>@a.Doctor?.FullName</td>
+        <td>@a.Department?.Name</td>
+        <td>@a.AppointmentDate.ToString("dd MMM yyyy")</td>
+        <td>@a.AppointmentTime.ToString(@"hh\:mm")</td>
+        <td><span class="status-badge badge-@a.Status.ToLower()">@a.Status</span></td>
+        <td>
+            <div class="d-flex gap-1">
+            <a href="/Appointments/Details/@a.AppointmentId" class="btn btn-sm btn-outline-primary btn-icon" title="View"><i class="fas fa-eye"></i></a>
+            @if (a.Status == "Pending") {
+            <form method="post" action="/Appointments/UpdateStatus/@a.AppointmentId" style="display:inline">@Html.AntiForgeryToken()<input type="hidden" name="status" value="Confirmed" /><button type="submit" class="btn btn-sm btn-outline-success btn-icon" title="Confirm"><i class="fas fa-check"></i></button></form>
+            <form method="post" action="/Appointments/UpdateStatus/@a.AppointmentId" style="display:inline">@Html.AntiForgeryToken()<input type="hidden" name="status" value="Cancelled" /><button type="submit" class="btn btn-sm btn-outline-danger btn-icon" title="Cancel" onclick="return confirm('Cancel this appointment?')"><i class="fas fa-times"></i></button></form>
+            }
+            @if (a.Status == "Confirmed") {
+            <form method="post" action="/Appointments/UpdateStatus/@a.AppointmentId" style="display:inline">@Html.AntiForgeryToken()<input type="hidden" name="status" value="Completed" /><button type="submit" class="btn btn-sm btn-outline-success btn-icon" title="Complete"><i class="fas fa-check-double"></i></button></form>
+            }
+            </div>
+        </td>
+    </tr>
+    }
+    </tbody>
+</table></div>
+@if (ViewBag.TotalPages > 1) {
+<div class="d-flex justify-content-end px-3 py-2 border-top"><nav><ul class="pagination pagination-sm mb-0">
+@for(int i=1;i<=(int)ViewBag.TotalPages;i++){<li class="page-item @(i==(int)ViewBag.CurrentPage?"active":"")"><a class="page-link" href="?page=@i&search=@ViewBag.Search&status=@ViewBag.Status&fromDate=@ViewBag.FromDate&toDate=@ViewBag.ToDate">@i</a></li>}
+</ul></nav></div>
+}
+}
+</div></div>

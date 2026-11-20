@@ -1,0 +1,288 @@
+﻿@model HospitalManagementSystem.Models.LabTestRequest
+@{
+    Layout = null;
+    var isVerified = Model.Status == "Verified" || Model.Status == "ReportReleased";
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Diagnostic Laboratory Report - @Model.RequestCode</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+    <style>
+        :root {
+            --primary: #0d6efd;
+            --text-dark: #1e293b;
+            --border-color: #cbd5e1;
+        }
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            margin: 0;
+            padding: 24px;
+            color: var(--text-dark);
+            background: #f8fafc;
+        }
+        .report-sheet {
+            max-width: 800px;
+            margin: 0 auto;
+            background: #ffffff;
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+            padding: 32px;
+            position: relative;
+        }
+        .watermark {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(-30deg);
+            font-size: 3.5rem;
+            font-weight: 900;
+            color: rgba(220, 53, 69, 0.12);
+            text-transform: uppercase;
+            letter-spacing: 5px;
+            pointer-events: none;
+            text-align: center;
+            border: 4px dashed rgba(220, 53, 69, 0.2);
+            padding: 20px 40px;
+            border-radius: 16px;
+            width: 85%;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            border-bottom: 3px solid var(--primary);
+            padding-bottom: 16px;
+            margin-bottom: 20px;
+        }
+        .hospital-logo-text {
+            font-size: 24px;
+            font-weight: 800;
+            color: #0f172a;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .patient-card {
+            background: #f1f5f9;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 24px;
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            font-size: 13.5px;
+        }
+        .test-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            font-size: 14px;
+        }
+        .test-table th {
+            background: #f8fafc;
+            border-bottom: 2px solid var(--border-color);
+            padding: 10px 12px;
+            text-align: left;
+            font-weight: 700;
+            color: #475569;
+            text-transform: uppercase;
+            font-size: 12px;
+        }
+        .test-table td {
+            border-bottom: 1px solid #e2e8f0;
+            padding: 12px;
+            vertical-align: top;
+        }
+        .flag-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+        .flag-normal { background: #dcfce7; color: #15803d; }
+        .flag-high { background: #fee2e2; color: #b91c1c; }
+        .flag-low { background: #fef3c7; color: #b45309; }
+        .flag-critical { background: #dc2626; color: #ffffff; animation: blink 1.5s infinite; }
+        .verification-box {
+            margin-top: 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            border-top: 1px solid var(--border-color);
+            padding-top: 20px;
+        }
+        .signature-line {
+            text-align: center;
+            width: 220px;
+        }
+        .btn-print {
+            background: var(--primary);
+            color: #ffffff;
+            border: none;
+            padding: 10px 22px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 2px 6px rgba(13, 110, 253, 0.3);
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        @@media print {
+            body { background: #ffffff; padding: 0; }
+            .report-sheet { border: none; box-shadow: none; padding: 10px; width: 100%; max-width: 100%; }
+            .no-print { display: none !important; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Print action controls -->
+    <div class="no-print" style="max-width: 800px; margin: 0 auto 16px auto; display: flex; justify-content: space-between; align-items: center;">
+        <a href="javascript:history.back()" style="color: #64748b; text-decoration: none; font-size: 14px;">
+            <i class="fas fa-arrow-left"></i> Back
+        </a>
+        <button onclick="window.print()" class="btn-print">
+            <i class="fas fa-print"></i> Print Official Report
+        </button>
+    </div>
+
+    <div class="report-sheet">
+        @if (!isVerified)
+        {
+            <div class="watermark">
+                PRELIMINARY DRAFT<br/>NOT VERIFIED
+            </div>
+        }
+
+        <!-- Letterhead Header -->
+        <div class="header">
+            <div>
+                <div class="hospital-logo-text">
+                    <i class="fas fa-hospital-alt" style="color: #0d6efd;"></i>
+                    CITY GENERAL HOSPITAL
+                </div>
+                <div style="font-size: 13px; color: #64748b; margin-top: 4px;">
+                    Department of Laboratory Medicine & Pathology • ISO 15189 Accredited
+                </div>
+                <div style="font-size: 12px; color: #94a3b8;">
+                    MG Road, Healthcare City • Emergency: +91-11-2345-6789
+                </div>
+            </div>
+            <div style="text-align: right;">
+                <div style="font-weight: 800; font-size: 18px; color: #0d6efd;">@Model.RequestCode</div>
+                <div style="font-size: 12px; color: #64748b; margin-top: 2px;">
+                    Barcode: <strong style="font-family: monospace;">@(Model.SampleBarcode ?? "N/A")</strong>
+                </div>
+                <div style="font-size: 12px; color: #64748b;">
+                    Sample Type: @(Model.SampleType ?? "Whole Blood")
+                </div>
+            </div>
+        </div>
+
+        <!-- Patient Demographics -->
+        <div class="patient-card">
+            <div><strong>Patient Name:</strong> @Model.Patient?.FullName</div>
+            <div><strong>Patient ID:</strong> @Model.Patient?.PatientCode</div>
+            <div><strong>Age / Gender:</strong> @Model.Patient?.Age Years / @Model.Patient?.Gender</div>
+            <div><strong>Contact:</strong> @Model.Patient?.Phone</div>
+            <div><strong>Referring Clinician:</strong> Dr. @(Model.Doctor?.FullName ?? "General Practitioner")</div>
+            <div><strong>Sample Collected:</strong> @(Model.SampleCollectedAt?.ToString("dd MMM yyyy HH:mm") ?? "Pending")</div>
+        </div>
+
+        @if (!isVerified)
+        {
+            <div style="background: #fff3cd; border: 1px solid #ffe69c; color: #664d03; padding: 10px 14px; border-radius: 6px; font-size: 13px; margin-bottom: 20px;">
+                <i class="fas fa-exclamation-triangle me-1"></i>
+                <strong>Notice:</strong> This is a preliminary analyzer finding. It has not been authorized or validated by the reporting pathologist and must not be used as final clinical guidance.
+            </div>
+        }
+
+        <!-- Test Results Table -->
+        <h4 style="margin: 0 0 10px 0; font-size: 16px; color: #0f172a; border-bottom: 1px solid #e2e8f0; padding-bottom: 6px;">
+            TEST INVESTIGATION: @Model.LabTest?.Name.ToUpper()
+        </h4>
+
+        <table class="test-table">
+            <thead>
+                <tr>
+                    <th style="width: 35%;">Investigation</th>
+                    <th style="width: 25%;">Observed Result</th>
+                    <th style="width: 25%;">Standard Biological Reference</th>
+                    <th style="width: 15%;">Flag</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>
+                        <strong>@Model.LabTest?.Name</strong>
+                        <div style="font-size: 12px; color: #64748b;">Category: @(Model.LabTest?.Category ?? "Clinical Pathology")</div>
+                    </td>
+                    <td style="font-size: 15px; font-weight: 700; color: @(Model.IsAbnormal ? "#dc2626" : "#0f172a");">
+                        <span style="white-space: pre-line;">@Model.Result</span>
+                    </td>
+                    <td style="color: #475569;">
+                        @(Model.ReferenceRange ?? Model.LabTest?.NormalRange ?? "Not specified")
+                    </td>
+                    <td>
+                        @if (Model.IsAbnormal)
+                        {
+                            var flagClass = Model.AbnormalFlag == "Critical" ? "flag-critical" : (Model.AbnormalFlag == "Low" ? "flag-low" : "flag-high");
+                            <span class="flag-badge @flagClass">@(Model.AbnormalFlag ?? "High")</span>
+                        }
+                        else
+                        {
+                            <span class="flag-badge flag-normal">Normal</span>
+                        }
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+
+        @if (!string.IsNullOrWhiteSpace(Model.Notes))
+        {
+            <div style="background: #f8fafc; border: 1px dashed var(--border-color); border-radius: 6px; padding: 12px; margin: 20px 0; font-size: 13px;">
+                <strong>Technologist Remarks:</strong> @Model.Notes
+            </div>
+        }
+
+        <!-- Quality Control Sign-Off -->
+        <div class="verification-box">
+            <div>
+                <div style="font-size: 12px; color: #64748b;">Tested By:</div>
+                <div style="font-weight: 600; font-size: 13px;">@(Model.SampleCollectedBy ?? "Lab Technologist")</div>
+                <div style="font-size: 11px; color: #94a3b8;">Automated Analyzer Integration</div>
+            </div>
+
+            <div class="signature-line">
+                @if (isVerified)
+                {
+                    <div style="color: #15803d; font-size: 24px; margin-bottom: 4px;">
+                        <i class="fas fa-certificate"></i>
+                    </div>
+                    <div style="font-weight: 700; font-size: 14px; color: #0f172a;">Dr. @(Model.VerifiedByDoctorName ?? "Chief Pathologist")</div>
+                    <div style="font-size: 11px; color: #64748b;">Consultant Pathologist, MD</div>
+                    <div style="font-size: 11px; color: #94a3b8;">Verified on @Model.VerifiedAt?.ToString("dd MMM yyyy HH:mm")</div>
+                }
+                else
+                {
+                    <div style="color: #dc3545; font-size: 13px; font-weight: 600; border-bottom: 1px dashed #dc3545; padding-bottom: 8px;">
+                        Awaiting Pathologist Verification
+                    </div>
+                    <div style="font-size: 11px; color: #94a3b8; margin-top: 4px;">Signature Pending</div>
+                }
+            </div>
+        </div>
+
+        <div style="margin-top: 24px; text-align: center; font-size: 11px; color: #94a3b8; border-top: 1px solid #f1f5f9; padding-top: 12px;">
+            This diagnostic report was generated electronically by City General Hospital Laboratory Information Management System. End of Report.
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,164 @@
+@model List<HospitalManagementSystem.Models.MedicationAdministration>
+@{
+    ViewData["Title"] = "Medication Administration Record (MAR)";
+    var admissions = ViewBag.Admissions as List<HospitalManagementSystem.Models.Admission> ?? new();
+    int? selectedAdmId = ViewBag.SelectedAdmissionId;
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <a asp-action="Station" class="btn btn-sm btn-outline-secondary rounded-pill px-3 mb-2">&larr; Back to Station</a>
+        <h2 class="fw-800 mb-1">Inpatient Medication Administration Record (MAR)</h2>
+        <p class="text-muted small mb-0">Closed-loop nurse verification and medication delivery tracking.</p>
+    </div>
+</div>
+
+<!-- ADMISSION FILTER -->
+<div class="card border-0 shadow-sm p-3 mb-4" style="border-radius: 14px;">
+    <form method="get" class="row align-items-center g-2">
+        <div class="col-md-5">
+            <select name="admissionId" class="form-select" onchange="this.form.submit()">
+                <option value="">-- All Admitted Inpatients --</option>
+                @foreach (var a in admissions)
+                {
+                    <option value="@a.AdmissionId" selected="@(selectedAdmId == a.AdmissionId)">
+                        @a.Patient?.FullName (@a.Ward &middot; Bed: @a.Bed?.BedNumber)
+                    </option>
+                }
+            </select>
+        </div>
+        <div class="col-md-7 text-md-end text-muted small">
+            <span><i class="fas fa-info-circle me-1 text-primary"></i>Medications require explicit clinical verification before logging as administered.</span>
+        </div>
+    </form>
+</div>
+
+@if (Model.Any())
+{
+    <div class="card border-0 shadow-sm" style="border-radius: 16px; overflow:hidden;">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th class="ps-4">Patient / Ward</th>
+                        <th>Medicine &amp; Dosage</th>
+                        <th>Route</th>
+                        <th>Scheduled Time</th>
+                        <th>Status</th>
+                        <th>Nurse Verification</th>
+                        <th class="text-end pe-4">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var mar in Model)
+                    {
+                        <tr>
+                            <td class="ps-4">
+                                <div class="fw-700 text-dark">@mar.Admission?.Patient?.FullName</div>
+                                <small class="text-muted">@mar.Admission?.Ward &bull; Bed @mar.Admission?.Bed?.BedNumber</small>
+                            </td>
+                            <td>
+                                <div class="fw-700 text-primary">@mar.MedicineName</div>
+                                <span class="badge bg-light text-dark border">@mar.Dosage</span>
+                            </td>
+                            <td>@mar.Route</td>
+                            <td>
+                                <div>@mar.ScheduledTime.ToString("hh:mm tt")</div>
+                                <small class="text-muted">@mar.ScheduledTime.ToString("dd MMM")</small>
+                            </td>
+                            <td>
+                                @if (mar.Status == "Administered")
+                                {
+                                    <span class="badge bg-success-subtle text-success rounded-pill px-3 py-1">
+                                        <i class="fas fa-check-circle me-1"></i> ADMINISTERED
+                                    </span>
+                                }
+                                else if (mar.Status == "Missed" || mar.Status == "Refused")
+                                {
+                                    <span class="badge bg-danger-subtle text-danger rounded-pill px-3 py-1">
+                                        <i class="fas fa-times-circle me-1"></i> @mar.Status.ToUpper()
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-warning-subtle text-warning rounded-pill px-3 py-1">
+                                        <i class="fas fa-clock me-1"></i> SCHEDULED / DUE
+                                    </span>
+                                }
+                            </td>
+                            <td>
+                                @if (mar.AdministeredTime.HasValue)
+                                {
+                                    <small class="text-dark fw-600 d-block">@mar.AdministeredByNurseName</small>
+                                    <small class="text-muted">at @mar.AdministeredTime.Value.ToString("HH:mm")</small>
+                                }
+                                else
+                                {
+                                    <span class="text-muted small">Pending Verification</span>
+                                }
+                            </td>
+                            <td class="text-end pe-4">
+                                @if (mar.Status == "Scheduled")
+                                {
+                                    <div class="d-inline-flex gap-1">
+                                        <form asp-action="AdministerMedication" method="post">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="id" value="@mar.MedicationAdministrationId" />
+                                            <button type="submit" class="btn btn-sm btn-success rounded-pill px-3 fw-600">
+                                                <i class="fas fa-check me-1"></i> Give Dose
+                                            </button>
+                                        </form>
+                                        <button type="button" class="btn btn-sm btn-outline-danger rounded-pill px-2" data-bs-toggle="modal" data-bs-target="#missModal-@mar.MedicationAdministrationId" title="Log Missed Dose">
+                                            <i class="fas fa-ban"></i>
+                                        </button>
+                                    </div>
+
+                                    <!-- MODAL MISSED DOSE -->
+                                    <div class="modal fade" id="missModal-@mar.MedicationAdministrationId" tabindex="-1">
+                                        <div class="modal-dialog modal-dialog-centered">
+                                            <div class="modal-content border-0 shadow" style="border-radius:18px;">
+                                                <div class="modal-header bg-danger text-white border-0">
+                                                    <h6 class="modal-title fw-700">Log Missed / Withheld Dose</h6>
+                                                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                                                </div>
+                                                <form asp-action="RecordMissedMedication" method="post">
+                                                    @Html.AntiForgeryToken()
+                                                    <input type="hidden" name="id" value="@mar.MedicationAdministrationId" />
+                                                    <div class="modal-body p-4 text-start">
+                                                        <p class="small text-muted mb-3">Medicine: <strong>@mar.MedicineName</strong> (@mar.Dosage)</p>
+                                                        <label class="form-label small fw-700">Reason for Withholding Dose *</label>
+                                                        <select name="reason" class="form-select mb-3" required>
+                                                            <option value="Patient asleep / resting">Patient asleep / resting</option>
+                                                            <option value="Patient refused dose">Patient refused dose</option>
+                                                            <option value="Patient NPO (Nil per os)">Patient NPO (Nil per os / fasting for surgery)</option>
+                                                            <option value="Adverse reaction suspected">Adverse reaction suspected</option>
+                                                            <option value="Medicine out of stock">Medicine out of stock</option>
+                                                            <option value="Physician hold order">Physician hold order</option>
+                                                        </select>
+                                                    </div>
+                                                    <div class="modal-footer border-0 p-3 pt-0">
+                                                        <button type="button" class="btn btn-light rounded-pill px-3" data-bs-dismiss="modal">Cancel</button>
+                                                        <button type="submit" class="btn btn-danger rounded-pill px-4 fw-600">Confirm Withheld</button>
+                                                    </div>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </div>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+}
+else
+{
+    <div class="card border-0 shadow-sm p-5 text-center text-muted" style="border-radius: 16px;">
+        <i class="fas fa-pills fs-1 mb-3 opacity-50"></i>
+        <h5>No Medication Schedules Found</h5>
+        <p class="mb-0">Medication orders written for admitted inpatients will appear here for scheduled delivery.</p>
+    </div>
+}
+

@@ -1,0 +1,131 @@
+@model HospitalManagementSystem.ViewModels.PatientProfileViewModel
+@{ ViewData["Title"] = Model.Patient.FullName + " - Profile"; }
+
+<div class="page-header">
+    <div><nav aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="/Patients">Patients</a></li><li class="breadcrumb-item active">@Model.Patient.FullName</li></ol></nav><h1 class="page-title">Patient Profile</h1></div>
+    <div class="d-flex gap-2 no-print">
+        @if (User.IsInRole("Admin") || User.IsInRole("Receptionist"))
+        {
+            <a href="/Patients/Edit/@Model.Patient.PatientId" class="btn btn-outline-primary"><i class="fas fa-edit me-1"></i>Edit</a>
+            <a href="/Appointments/Create?patientId=@Model.Patient.PatientId" class="btn btn-primary"><i class="fas fa-calendar-plus me-1"></i>Book Appointment</a>
+        }
+        <button onclick="window.print()" class="btn btn-outline-secondary"><i class="fas fa-print me-1"></i>Print</button>
+    </div>
+</div>
+
+<div class="row g-3">
+    <!-- Patient Info Card -->
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <div class="profile-avatar">@Model.Patient.FullName[0]</div>
+                <h5 class="fw-700 mb-1">@Model.Patient.FullName</h5>
+                <div class="text-muted small mb-2">@Model.Patient.PatientCode</div>
+                <span class="status-badge @(Model.Patient.IsActive ? "badge-active" : "badge-inactive")">@(Model.Patient.IsActive ? "Active" : "Inactive")</span>
+                <hr class="section-divider" />
+                <div class="profile-info-item"><span class="profile-info-label">Age</span><span>@Model.Patient.Age yrs</span></div>
+                <div class="profile-info-item"><span class="profile-info-label">Gender</span><span>@Model.Patient.Gender</span></div>
+                <div class="profile-info-item"><span class="profile-info-label">Blood Group</span><span class="text-danger fw-600">@(Model.Patient.BloodGroup ?? "N/A")</span></div>
+                <div class="profile-info-item"><span class="profile-info-label">Phone</span><span>@Model.Patient.Phone</span></div>
+                @if (!string.IsNullOrEmpty(Model.Patient.Email))
+                {
+                    <div class="profile-info-item"><span class="profile-info-label">Email</span><span class="small">@Model.Patient.Email</span></div>
+                }
+                <div class="profile-info-item"><span class="profile-info-label">Registered</span><span class="small">@Model.Patient.RegistrationDate.ToString("dd MMM yyyy")</span></div>
+            </div>
+        </div>
+
+        @if (!string.IsNullOrEmpty(Model.Patient.Allergies))
+        {
+            <div class="card mt-3 border-danger">
+                <div class="card-body">
+                    <h6 class="text-danger fw-700"><i class="fas fa-exclamation-triangle me-1"></i>Allergies</h6>
+                    <p class="small mb-0">@Model.Patient.Allergies</p>
+                </div>
+            </div>
+        }
+
+        @if (!string.IsNullOrEmpty(Model.Patient.EmergencyContact))
+        {
+            <div class="card mt-3">
+                <div class="card-body">
+                    <h6 class="fw-700 text-muted"><i class="fas fa-phone me-1"></i>Emergency Contact</h6>
+                    <p class="small mb-0">@Model.Patient.EmergencyContact</p>
+                </div>
+            </div>
+        }
+    </div>
+
+    <!-- Tabs -->
+    <div class="col-md-9">
+        <div class="card">
+            <div class="card-body p-0">
+                <ul class="nav nav-tabs px-3 pt-2" id="patientTabs">
+                    <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" href="#appointments"><i class="fas fa-calendar-check me-1"></i>Appointments (@Model.Appointments.Count)</a></li>
+                    <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#prescriptions"><i class="fas fa-file-prescription me-1"></i>Prescriptions (@Model.Prescriptions.Count)</a></li>
+                    <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#labresults"><i class="fas fa-flask me-1"></i>Lab Results (@Model.LabResults.Count)</a></li>
+                    <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#admissions"><i class="fas fa-procedures me-1"></i>Admissions (@Model.Admissions.Count)</a></li>
+                    <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#bills"><i class="fas fa-file-invoice me-1"></i>Bills (@Model.Bills.Count)</a></li>
+                </ul>
+                <div class="tab-content p-3">
+                    <!-- Appointments Tab -->
+                    <div class="tab-pane fade show active" id="appointments">
+                        @if (!Model.Appointments.Any()) { <div class="empty-state py-3"><i class="fas fa-calendar"></i><h5>No appointments</h5></div> }
+                        else {
+                        <table class="table"><thead><tr><th>Code</th><th>Doctor</th><th>Department</th><th>Date & Time</th><th>Status</th></tr></thead>
+                        <tbody>@foreach(var a in Model.Appointments){<tr><td>@a.AppointmentCode</td><td>@a.Doctor?.FullName</td><td>@a.Department?.Name</td><td>@a.AppointmentDate.ToString("dd MMM")&nbsp;@a.AppointmentTime.ToString(@"hh\:mm")</td><td><span class="status-badge badge-@a.Status.ToLower()">@a.Status</span></td></tr>}</tbody></table>
+                        }
+                    </div>
+                    <!-- Prescriptions Tab -->
+                    <div class="tab-pane fade" id="prescriptions">
+                        @if (!Model.Prescriptions.Any()) { <div class="empty-state py-3"><i class="fas fa-prescription"></i><h5>No prescriptions</h5></div> }
+                        else {
+                        @foreach(var rx in Model.Prescriptions) {
+                            <div class="border rounded-3 p-3 mb-3">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div><strong>@rx.PrescriptionCode</strong> &mdash; <span class="text-muted small">Dr. @rx.Doctor?.FullName &middot; @rx.CreatedAt.ToString("dd MMM yyyy")</span></div>
+                                    <a href="/Prescriptions/Print/@rx.PrescriptionId" target="_blank" class="btn btn-sm btn-outline-primary"><i class="fas fa-print me-1"></i>Print</a>
+                                </div>
+                                <div class="mt-2 small"><strong>Diagnosis:</strong> @rx.Diagnosis</div>
+                                <div class="mt-1">@foreach(var item in rx.Items){<span class="badge bg-light text-dark me-1 mb-1">@item.MedicineName @item.Dosage</span>}</div>
+                            </div>
+                        }
+                        }
+                    </div>
+                    <!-- Lab Results Tab -->
+                    <div class="tab-pane fade" id="labresults">
+                        @if (!Model.LabResults.Any()) { <div class="empty-state py-3"><i class="fas fa-flask"></i><h5>No lab results</h5></div> }
+                        else {
+                        <table class="table"><thead><tr><th>Code</th><th>Test</th><th>Doctor</th><th>Date</th><th>Status</th><th></th></tr></thead>
+                        <tbody>@foreach(var l in Model.LabResults){<tr><td>@l.RequestCode</td><td>@l.LabTest?.Name</td><td>@l.Doctor?.FullName</td><td class="small">@l.RequestedAt.ToString("dd MMM yyyy")</td><td><span class="status-badge badge-@(l.Status == "Completed" ? "completed" : "pending")">@l.Status</span></td><td>@if(l.Status == "Completed"){<a href="/Laboratory/Report/@l.LabTestRequestId" class="btn btn-sm btn-outline-primary">Report</a>}</td></tr>}</tbody></table>
+                        }
+                    </div>
+                    <!-- Admissions Tab -->
+                    <div class="tab-pane fade" id="admissions">
+                        @if (!Model.Admissions.Any()) { <div class="empty-state py-3"><i class="fas fa-procedures"></i><h5>No admissions</h5></div> }
+                        else {
+                        <table class="table"><thead><tr><th>Code</th><th>Doctor</th><th>Ward/Bed</th><th>Admitted</th><th>Discharged</th><th>Status</th></tr></thead>
+                        <tbody>@foreach(var adm in Model.Admissions){<tr><td>@adm.AdmissionCode</td><td>@adm.Doctor?.FullName</td><td>@adm.Ward / @adm.Bed?.BedNumber</td><td class="small">@adm.AdmissionDate.ToString("dd MMM yyyy")</td><td class="small">@(adm.ActualDischargeDate?.ToString("dd MMM yyyy") ?? "-")</td><td><span class="status-badge @(adm.Status == "Admitted" ? "badge-active" : "badge-completed")">@adm.Status</span></td></tr>}</tbody></table>
+                        }
+                    </div>
+                    <!-- Bills Tab -->
+                    <div class="tab-pane fade" id="bills">
+                        @if (!Model.Bills.Any()) { <div class="empty-state py-3"><i class="fas fa-file-invoice"></i><h5>No bills</h5></div> }
+                        else {
+                        <table class="table"><thead><tr><th>Bill No.</th><th>Total</th><th>Paid</th><th>Method</th><th>Status</th><th></th></tr></thead>
+                        <tbody>@foreach(var b in Model.Bills){<tr><td>@b.BillCode</td><td>₹@b.TotalAmount.ToString("N0")</td><td>₹@b.AmountPaid.ToString("N0")</td><td>@(b.PaymentMethod ?? "-")</td><td><span class="status-badge @(b.PaymentStatus == "Paid" ? "badge-paid" : b.PaymentStatus == "Partial" ? "badge-partial" : "badge-pending")">@b.PaymentStatus</span></td><td><a href="/Billing/Invoice/@b.BillId" class="btn btn-sm btn-outline-primary"><i class="fas fa-file-invoice me-1"></i>Invoice</a></td></tr>}</tbody></table>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        @if (!string.IsNullOrEmpty(Model.Patient.MedicalHistory))
+        {
+            <div class="card mt-3">
+                <div class="card-header"><span class="card-title"><i class="fas fa-notes-medical me-2"></i>Medical History</span></div>
+                <div class="card-body"><p class="small mb-0">@Model.Patient.MedicalHistory</p></div>
+            </div>
+        }
+    </div>
+</div>

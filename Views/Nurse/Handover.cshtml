@@ -1,0 +1,139 @@
+@model List<HospitalManagementSystem.Models.ShiftHandover>
+@{
+    ViewData["Title"] = "Nursing Shift Handover (SBAR)";
+    int activeCount = ViewBag.ActiveInpatientCount ?? 0;
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <a asp-action="Station" class="btn btn-sm btn-outline-secondary rounded-pill px-3 mb-2">&larr; Back to Station</a>
+        <h2 class="fw-800 mb-1">Nursing Shift Handover (SBAR)</h2>
+        <p class="text-muted small mb-0">Standardized clinical communication between outgoing and incoming duty shifts.</p>
+    </div>
+    <button type="button" class="btn btn-primary rounded-pill px-4 fw-600 shadow-sm" data-bs-toggle="modal" data-bs-target="#newHandoverModal">
+        <i class="fas fa-plus me-1"></i> New Shift Handover
+    </button>
+</div>
+
+<!-- HANDOVER HISTORY -->
+@if (Model.Any())
+{
+    <div class="row g-3">
+        @foreach (var h in Model)
+        {
+            <div class="col-md-6">
+                <div class="card border-0 shadow-sm h-100 p-4" style="border-radius: 16px;">
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <div>
+                            <span class="badge bg-primary-subtle text-primary px-3 py-1 rounded-pill fw-700">@h.Ward Ward &bull; @h.ShiftType Shift</span>
+                            <div class="fw-700 text-dark mt-2">@h.HandoverDate.ToString("dd MMMM yyyy")</div>
+                        </div>
+                        <span class="badge bg-light text-dark border px-2 py-1">@h.TotalPatientsCount Inpatients</span>
+                    </div>
+
+                    <div class="small mb-3 d-flex justify-content-between bg-light p-2 rounded-2">
+                        <div><strong class="text-muted">Outgoing:</strong> @h.OutgoingNurseName</div>
+                        <div><strong class="text-muted">Incoming:</strong> @h.IncomingNurseName</div>
+                    </div>
+
+                    @if (!string.IsNullOrEmpty(h.CriticalPatientsSummary))
+                    {
+                        <div class="mb-2">
+                            <span class="small fw-700 text-danger"><i class="fas fa-exclamation-triangle me-1"></i>Critical Patients (SBAR):</span>
+                            <p class="small text-secondary mb-0">@h.CriticalPatientsSummary</p>
+                        </div>
+                    }
+
+                    @if (!string.IsNullOrEmpty(h.PendingTasks))
+                    {
+                        <div class="mb-2">
+                            <span class="small fw-700 text-warning"><i class="fas fa-tasks me-1"></i>Pending Tasks &amp; Medications:</span>
+                            <p class="small text-secondary mb-0">@h.PendingTasks</p>
+                        </div>
+                    }
+
+                    @if (!string.IsNullOrEmpty(h.GeneralNotes))
+                    {
+                        <div>
+                            <span class="small fw-700 text-muted">Ward Notes:</span>
+                            <p class="small text-muted mb-0">@h.GeneralNotes</p>
+                        </div>
+                    }
+
+                    <div class="mt-auto pt-3 border-top text-muted small" style="font-size:11px;">
+                        Handover logged at @h.CreatedAt.ToString("dd MMM yyyy, HH:mm") UTC
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}
+else
+{
+    <div class="card border-0 shadow-sm p-5 text-center text-muted" style="border-radius: 16px;">
+        <i class="fas fa-clipboard-list fs-1 mb-3 opacity-50"></i>
+        <h5>No Shift Handovers Recorded</h5>
+        <p class="mb-0">Click "+ New Shift Handover" to create your first clinical shift report.</p>
+    </div>
+}
+
+<!-- NEW HANDOVER MODAL -->
+<div class="modal fade" id="newHandoverModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content border-0 shadow" style="border-radius:18px;">
+            <div class="modal-header bg-primary text-white border-0">
+                <h5 class="modal-title fw-700"><i class="fas fa-clipboard-check me-2"></i>Record Shift Handover Report</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form asp-action="CreateHandover" method="post">
+                @Html.AntiForgeryToken()
+                <div class="modal-body p-4">
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-4">
+                            <label class="form-label small fw-700">Ward *</label>
+                            <select name="ward" class="form-select" required>
+                                <option value="General">General Ward</option>
+                                <option value="ICU">ICU Ward</option>
+                                <option value="Private">Private Suite Ward</option>
+                                <option value="Emergency">Emergency Ward</option>
+                                <option value="All">All Inpatient Wards</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small fw-700">Shift Type *</label>
+                            <select name="shiftType" class="form-select" required>
+                                <option value="Morning">Morning (07:00 - 15:00)</option>
+                                <option value="Afternoon">Afternoon (15:00 - 23:00)</option>
+                                <option value="Night">Night (23:00 - 07:00)</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small fw-700">Incoming Nurse Name *</label>
+                            <input type="text" name="incomingNurseName" class="form-control" placeholder="Nurse name taking over" required />
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label small fw-700 text-danger">Situation &amp; Critical Patients (SBAR) *</label>
+                        <textarea name="criticalPatientsSummary" rows="3" class="form-control" placeholder="Summarize high-risk patients, abnormal vitals, or critical doctor orders..." required></textarea>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label small fw-700 text-warning">Pending Medications &amp; Procedures *</label>
+                        <textarea name="pendingTasks" rows="2" class="form-control" placeholder="List scheduled IV fluids, post-op dressing changes, pending lab draws..." required></textarea>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label small fw-700 text-muted">General Ward Notes</label>
+                        <textarea name="generalNotes" rows="2" class="form-control" placeholder="Bed occupancy remarks, supply shortages, maintenance alerts..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 p-4 pt-0">
+                    <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary rounded-pill px-4 fw-700">Sign &amp; Submit Handover</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+

@@ -1,0 +1,78 @@
+@model HospitalManagementSystem.Models.Prescription
+@{ ViewData["Title"] = "Prescription - " + Model.PrescriptionCode; }
+
+<div class="page-header">
+    <div>
+        <nav aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="/Prescriptions">Prescriptions</a></li><li class="breadcrumb-item active">@Model.PrescriptionCode</li></ol></nav>
+        <h1 class="page-title">Prescription Details</h1>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="/Prescriptions/Print/@Model.PrescriptionId" target="_blank" class="btn btn-outline-primary"><i class="fas fa-print me-1"></i>Print View</a>
+        <a href="/Prescriptions" class="btn btn-outline-secondary">Back to List</a>
+    </div>
+</div>
+
+<div class="row g-3">
+    <div class="col-md-4">
+        <div class="card mb-3">
+            <div class="card-header"><span class="card-title">Patient Info</span></div>
+            <div class="card-body">
+                <h5 class="fw-700">@Model.Patient?.FullName</h5>
+                <div class="text-muted small mb-2">@Model.Patient?.PatientCode</div>
+                <div class="profile-info-item"><span class="profile-info-label">Age / Gender</span><span>@Model.Patient?.Age yrs / @Model.Patient?.Gender</span></div>
+                <div class="profile-info-item"><span class="profile-info-label">Blood Group</span><span class="text-danger fw-600">@(Model.Patient?.BloodGroup ?? "N/A")</span></div>
+                <div class="profile-info-item"><span class="profile-info-label">Phone</span><span>@Model.Patient?.Phone</span></div>
+            </div>
+        </div>
+        <div class="card">
+            <div class="card-header"><span class="card-title">Prescribing Doctor</span></div>
+            <div class="card-body">
+                <h6 class="fw-700">Dr. @Model.Doctor?.FullName</h6>
+                <div class="text-muted small">@Model.Doctor?.Specialization</div>
+                <div class="small">@Model.Doctor?.Department?.Name</div>
+                <hr/>
+                <div class="small text-muted">Date: @Model.CreatedAt.ToString("dd MMMM yyyy HH:mm")</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-8">
+        <div class="card mb-3">
+            <div class="card-header"><span class="card-title">Diagnosis & Advice</span></div>
+            <div class="card-body">
+                <h6>Diagnosis:</h6>
+                <p class="mb-3">@Model.Diagnosis</p>
+                @if (!string.IsNullOrEmpty(Model.Instructions))
+                {
+                    <h6>General Instructions:</h6>
+                    <p class="mb-3">@Model.Instructions</p>
+                }
+                @if (Model.FollowUpDate.HasValue)
+                {
+                    <div class="alert alert-info py-2 mb-0"><i class="fas fa-calendar-check me-2"></i>Follow-up Date: <strong>@Model.FollowUpDate.Value.ToString("dd MMMM yyyy")</strong></div>
+                }
+            </div>
+        </div>
+        <div class="card">
+            <div class="card-header"><span class="card-title"><i class="fas fa-pills me-2 text-primary"></i>Prescribed Medicines</span></div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead><tr><th>Medicine</th><th>Dosage</th><th>Frequency</th><th>Duration</th><th>Instructions</th></tr></thead>
+                        <tbody>
+                        @foreach(var item in Model.Items)
+                        {
+                            <tr>
+                                <td class="fw-600">@item.MedicineName</td>
+                                <td>@item.Dosage</td>
+                                <td><span class="badge bg-light text-dark">@item.Frequency</span></td>
+                                <td>@item.Duration</td>
+                                <td class="small text-muted">@(item.Instructions ?? "-")</td>
+                            </tr>
+                        }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

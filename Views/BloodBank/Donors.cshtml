@@ -1,0 +1,13 @@
+﻿@model IEnumerable<HospitalManagementSystem.Models.BloodDonor>
+@{ ViewData["Title"] = "Blood Donors"; }
+<div class="page-header"><div><h1 class="page-title">Registered Donors</h1></div><a href="/BloodBank/AddDonor" class="btn btn-danger"><i class="fas fa-plus me-2"></i>Add Donor</a></div>
+<div class="card"><div class="card-body p-0">
+<div class="table-responsive"><table class="table"><thead><tr><th>Name</th><th>Blood Group</th><th>Units</th><th>Contact</th><th>Date</th></tr></thead><tbody>
+@foreach(var d in Model){<tr>
+<td class="fw-600">@d.DonorName</td>
+<td><span class="badge" style="background:#f8d7da;color:#721c24;font-size:14px;">@d.BloodGroup</span></td>
+<td>@d.UnitsDonated</td>
+<td>@d.Phone</td>
+<td class="small">@d.RegisteredAt.ToLocalTime().ToString("dd MMM yyyy")</td>
+</tr>}
+</tbody></table></div></div></div>

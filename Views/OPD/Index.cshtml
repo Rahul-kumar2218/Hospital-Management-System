@@ -1,0 +1,23 @@
+﻿@model IEnumerable<HospitalManagementSystem.Models.OPDRecord>
+@{ ViewData["Title"] = "OPD Queue"; }
+<div class="page-header"><div><h1 class="page-title">OPD Management</h1><p class="page-subtitle">Today: @ViewBag.TodayDate</p></div><a href="/OPD/Register" class="btn btn-primary"><i class="fas fa-plus me-2"></i>Register OPD</a></div>
+<div class="row g-3 mb-4">
+    <div class="col-md-4"><div class="stat-card orange"><div class="stat-card-icon orange"><i class="fas fa-hourglass-half"></i></div><div class="stat-value">@ViewBag.Waiting</div><div class="stat-label">Waiting</div></div></div>
+    <div class="col-md-4"><div class="stat-card blue"><div class="stat-card-icon blue"><i class="fas fa-stethoscope"></i></div><div class="stat-value">@ViewBag.InConsultation</div><div class="stat-label">In Consultation</div></div></div>
+    <div class="col-md-4"><div class="stat-card green"><div class="stat-card-icon green"><i class="fas fa-check-circle"></i></div><div class="stat-value">@ViewBag.Completed</div><div class="stat-label">Completed</div></div></div>
+</div>
+<div class="card"><div class="card-body p-0">
+@if(!Model.Any()){<div class="empty-state"><i class="fas fa-clipboard-list"></i><h5>No OPD records today</h5></div>}
+else {
+<div class="table-responsive"><table class="table"><thead><tr><th>Token</th><th>Patient</th><th>Doctor</th><th>Status</th><th>Actions</th></tr></thead><tbody>
+@foreach(var o in Model){<tr>
+<td><span class="badge bg-primary" style="font-size:18px;padding:8px 14px;">#@o.TokenNumber.ToString("D3")</span></td>
+<td><div class="fw-600">@o.Patient?.FullName</div><div class="small text-muted">@o.ChiefComplaint</div></td>
+<td>@o.Doctor?.FullName</td>
+<td><span class="status-badge @(o.Status=="Waiting"?"badge-waiting":o.Status=="InConsultation"?"badge-confirmed":"badge-completed")">@o.Status</span></td>
+<td><div class="d-flex gap-1">
+@if(o.Status=="Waiting"){<form method="post" action="/OPD/UpdateStatus/@o.OPDRecordId">@Html.AntiForgeryToken()<input type="hidden" name="status" value="InConsultation"/><button type="submit" class="btn btn-sm btn-outline-primary">In Consultation</button></form>}
+@if(o.Status=="InConsultation"){<form method="post" action="/OPD/UpdateStatus/@o.OPDRecordId">@Html.AntiForgeryToken()<input type="hidden" name="status" value="Completed"/><button type="submit" class="btn btn-sm btn-outline-success">Complete</button></form>}
+</div></td></tr>}
+</tbody></table></div>}
+</div></div>

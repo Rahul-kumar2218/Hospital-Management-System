@@ -1,0 +1,204 @@
+@model HospitalManagementSystem.ViewModels.PharmacyDeskViewModel
+@{
+    ViewData["Title"] = "Hospital Pharmacy Dispensing Desk";
+}
+
+<div class="page-header d-flex flex-wrap justify-content-between align-items-center gap-3">
+    <div>
+        <div class="d-flex align-items-center gap-2 mb-1">
+            <span class="badge bg-success px-3 py-1 rounded-pill">Pharmacy Command Center</span>
+            <span class="badge bg-light text-dark border px-2 py-1">Batch &amp; Expiry Traceability</span>
+        </div>
+        <h1 class="page-title mb-1">Hospital Pharmacy Dispensing Desk</h1>
+        <p class="page-subtitle mb-0">Dispense verified medications against doctor prescriptions, track batches, and enforce zero-dispensing of expired stock.</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a asp-action="Create" class="btn btn-primary d-flex align-items-center gap-2 px-3 py-2 fw-600 rounded-pill shadow-sm">
+            <i class="fas fa-plus-circle"></i> Add New Medicine
+        </a>
+        <a asp-action="Index" class="btn btn-outline-secondary d-flex align-items-center gap-2 px-3 py-2 fw-600 rounded-pill">
+            <i class="fas fa-boxes"></i> Full Catalog
+        </a>
+    </div>
+</div>
+
+<!-- STAT CARDS -->
+<div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+        <div class="stat-card blue">
+            <div class="stat-card-icon blue"><i class="fas fa-pills"></i></div>
+            <div class="stat-value">@Model.TotalActiveMedicines</div>
+            <div class="stat-label">Active Medicine Products</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="stat-card orange">
+            <div class="stat-card-icon orange"><i class="fas fa-file-prescription"></i></div>
+            <div class="stat-value">@Model.PendingDispensesCount</div>
+            <div class="stat-label">Doctor Prescriptions to Dispense</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="stat-card red">
+            <div class="stat-card-icon red"><i class="fas fa-exclamation-triangle"></i></div>
+            <div class="stat-value">@Model.LowStockMedicines.Count</div>
+            <div class="stat-label">Low Stock Warnings</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="stat-card red">
+            <div class="stat-card-icon red"><i class="fas fa-calendar-times"></i></div>
+            <div class="stat-value">@Model.ExpiringMedicines.Count</div>
+            <div class="stat-label">Expiring within 30 Days</div>
+        </div>
+    </div>
+</div>
+
+<!-- DOCTOR PRESCRIPTIONS PENDING DISPENSING -->
+<div class="card border-0 shadow-sm mb-4" style="border-radius: 18px;">
+    <div class="card-header bg-transparent border-0 pt-4 px-4 pb-2 d-flex justify-content-between align-items-center">
+        <div>
+            <h5 class="fw-800 text-dark mb-1"><i class="fas fa-file-prescription text-primary me-2"></i>Doctor Prescriptions Awaiting Dispensing</h5>
+            <small class="text-muted">Direct clinical link: dispense medications directly into patient records with batch selection.</small>
+        </div>
+    </div>
+    <div class="card-body px-4 pb-4">
+        @if (Model.PendingPrescriptions.Any())
+        {
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Prescription #</th>
+                            <th>Patient Details</th>
+                            <th>Doctor</th>
+                            <th>Diagnosis</th>
+                            <th>Medicines Ordered</th>
+                            <th>Prescribed Date</th>
+                            <th class="text-end">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var rx in Model.PendingPrescriptions)
+                        {
+                            <tr>
+                                <td>
+                                    <span class="fw-700 text-primary">@rx.PrescriptionCode</span>
+                                </td>
+                                <td>
+                                    <div class="fw-700 text-dark">@rx.Patient?.FullName</div>
+                                    <small class="text-muted">ID: @rx.Patient?.PatientCode &bull; Phone: @rx.Patient?.Phone</small>
+                                    @if (!string.IsNullOrEmpty(rx.Patient?.Allergies))
+                                    {
+                                        <div class="badge bg-danger-subtle text-danger" style="font-size:10px;">
+                                            Allergies: @rx.Patient.Allergies
+                                        </div>
+                                    }
+                                </td>
+                                <td>Dr. @rx.Doctor?.FullName</td>
+                                <td>@rx.Diagnosis</td>
+                                <td>
+                                    <span class="badge bg-light text-dark border">@rx.Items.Count item(s)</span>
+                                </td>
+                                <td class="small text-muted">@rx.CreatedAt.ToString("dd MMM yyyy, HH:mm")</td>
+                                <td class="text-end">
+                                    <a asp-action="Dispense" asp-route-id="@rx.PrescriptionId" class="btn btn-sm btn-success rounded-pill px-3 fw-600 shadow-sm">
+                                        <i class="fas fa-check-circle me-1"></i> Dispense Now
+                                    </a>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+        else
+        {
+            <div class="text-center py-4 text-muted">
+                <i class="fas fa-check-circle fs-2 mb-2 d-block opacity-50 text-success"></i>
+                <p class="mb-0">All doctor prescriptions are currently dispensed. Queue is clear!</p>
+            </div>
+        }
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- RECENT DISPENSATIONS -->
+    <div class="col-lg-6">
+        <div class="card border-0 shadow-sm h-100" style="border-radius: 18px;">
+            <div class="card-header bg-transparent border-0 pt-4 px-4 pb-2">
+                <h5 class="fw-800 text-dark mb-0"><i class="fas fa-receipt text-success me-2"></i>Recent Medication Dispensations</h5>
+            </div>
+            <div class="card-body px-4 pb-4">
+                @if (Model.RecentDispensations.Any())
+                {
+                    <div class="table-responsive">
+                        <table class="table table-sm table-hover align-middle mb-0">
+                            <thead class="table-light small">
+                                <tr>
+                                    <th>Dispense Code</th>
+                                    <th>Patient</th>
+                                    <th>Medicine</th>
+                                    <th>Batch</th>
+                                    <th>Qty</th>
+                                    <th>Total</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var d in Model.RecentDispensations)
+                                {
+                                    <tr>
+                                        <td><code>@d.DispensationCode</code></td>
+                                        <td class="fw-600">@d.Patient?.FullName</td>
+                                        <td>@d.MedicineName</td>
+                                        <td><code>@d.BatchNumber</code></td>
+                                        <td>@d.QuantityDispensed</td>
+                                        <td class="fw-700 text-success">₹@d.TotalPrice.ToString("N0")</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+                else
+                {
+                    <div class="text-center py-4 text-muted">No dispensations logged yet.</div>
+                }
+            </div>
+        </div>
+    </div>
+
+    <!-- STOCK MOVEMENT AUDIT TRAIL -->
+    <div class="col-lg-6">
+        <div class="card border-0 shadow-sm h-100" style="border-radius: 18px;">
+            <div class="card-header bg-transparent border-0 pt-4 px-4 pb-2">
+                <h5 class="fw-800 text-dark mb-0"><i class="fas fa-history text-cyan me-2"></i>Stock Movement Audit History</h5>
+            </div>
+            <div class="card-body px-4 pb-4">
+                @if (Model.RecentStockMovements.Any())
+                {
+                    <div class="list-group list-group-flush">
+                        @foreach (var s in Model.RecentStockMovements)
+                        {
+                            <div class="list-group-item px-0 py-2 border-bottom d-flex justify-content-between align-items-center">
+                                <div>
+                                    <span class="badge @(s.QuantityChange < 0 ? "bg-danger-subtle text-danger" : "bg-success-subtle text-success") rounded-pill px-2">
+                                        @(s.QuantityChange > 0 ? "+" : "")@s.QuantityChange
+                                    </span>
+                                    <strong class="text-dark ms-1">@s.Medicine?.Name</strong>
+                                    <small class="text-muted d-block" style="font-size:11px;">@s.Notes &middot; Remaining: @s.RemainingStock units</small>
+                                </div>
+                                <span class="small text-muted">@s.Timestamp.ToString("dd MMM, HH:mm")</span>
+                            </div>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <div class="text-center py-4 text-muted">No stock movements logged.</div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+

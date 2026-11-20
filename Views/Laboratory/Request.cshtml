@@ -1,0 +1,16 @@
+﻿@model HospitalManagementSystem.Models.LabTestRequest
+@{ ViewData["Title"] = "Lab Test Request"; }
+<div class="page-header"><div><h1 class="page-title">New Lab Test Request</h1></div></div>
+<div class="row justify-content-center"><div class="col-md-7"><div class="card"><div class="card-body">
+<form asp-action="Request" method="post">@Html.AntiForgeryToken()
+<div asp-validation-summary="All" class="alert alert-danger"></div>
+<div class="mb-3"><label class="form-label">Patient *</label><select asp-for="PatientId" class="form-select" required><option value="">-- Select --</option>@foreach(var p in ViewBag.Patients as List<HospitalManagementSystem.Models.Patient>??new List<HospitalManagementSystem.Models.Patient>()){<option value="@p.PatientId">@p.FullName (@p.PatientCode)</option>}</select></div>
+<div class="mb-3"><label class="form-label">Doctor *</label><select asp-for="DoctorId" class="form-select" required><option value="">-- Select --</option>@foreach(var d in ViewBag.Doctors as List<HospitalManagementSystem.Models.Doctor>??new List<HospitalManagementSystem.Models.Doctor>()){<option value="@d.DoctorId">@d.FullName</option>}</select></div>
+<div class="mb-3"><label class="form-label">Lab Test *</label><select asp-for="LabTestId" class="form-select" required><option value="">-- Select Test --</option>@foreach(var t in ViewBag.LabTests as List<HospitalManagementSystem.Models.LabTest>??new List<HospitalManagementSystem.Models.LabTest>()){<option value="@t.LabTestId">@t.Name (@t.Category) - ₹@t.Price</option>}</select></div>
+<div class="mb-3"><label class="form-label">Notes</label><input name="notes" class="form-control" /></div>
+<div class="mb-3"><label class="form-label">Priority</label><select name="Priority" class="form-select"><option value="Routine">Routine</option><option value="Urgent">Urgent</option><option value="STAT">STAT (Emergency)</option></select></div>
+<div class="d-flex gap-2"><button type="submit" class="btn btn-primary"><i class="fas fa-flask me-2"></i>Submit Request</button><a href="/Laboratory" class="btn btn-outline-secondary">Cancel</a></div>
+</form></div></div></div></div>
+@section Scripts { @{ await Html.RenderPartialAsync("_ValidationScriptsPartial"); } }
+
+

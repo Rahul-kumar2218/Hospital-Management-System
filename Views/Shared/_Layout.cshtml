@@ -1,0 +1,377 @@
+@using Microsoft.AspNetCore.Identity
+@inject SignInManager<HospitalManagementSystem.Models.ApplicationUser> SignInManager
+@inject UserManager<HospitalManagementSystem.Models.ApplicationUser> UserManager
+@{
+    var user = await UserManager.GetUserAsync(User);
+    var roles = user != null ? await UserManager.GetRolesAsync(user) : new List<string>();
+    var currentRole = roles.FirstOrDefault() ?? "Guest";
+    var userName = user?.FullName ?? User.Identity?.Name ?? "User";
+    var initials = string.Join("", (userName ?? "U").Split(' ').Take(2).Select(w => w[0])).ToUpper();
+    var controller = ViewContext.RouteData.Values["controller"]?.ToString() ?? "";
+    bool IsActive(string ctrl) => controller.Equals(ctrl, StringComparison.OrdinalIgnoreCase);
+    bool IsAnyRole(params string[] r) => r.Any(x => User.IsInRole(x));
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - City General Hospital</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" />
+    @await RenderSectionAsync("Styles", required: false)
+</head>
+<body>
+
+@if (SignInManager.IsSignedIn(User))
+{
+    <!-- Sidebar Overlay (mobile) -->
+    <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+
+    <div class="wrapper">
+        <!-- ===== SIDEBAR ===== -->
+        <nav class="sidebar" id="sidebar">
+            <div class="sidebar-brand">
+                <div class="brand-icon"><i class="fas fa-hospital-alt"></i></div>
+                <div class="brand-text">City General Hospital<br/><small>Management System</small></div>
+            </div>
+
+            <div class="sidebar-nav">
+                <div class="nav-section">Main</div>
+                @if (IsAnyRole("Patient"))
+                {
+                    <a class="nav-link @(IsActive("Portal") ? "active" : "")" asp-controller="Portal" asp-action="Index">
+                        <i class="fas fa-heartbeat"></i> Patient Portal
+                    </a>
+                    <a class="nav-link" asp-controller="Portal" asp-action="BookAppointment">
+                        <i class="fas fa-calendar-plus"></i> Book Appointment
+                    </a>
+                    <a class="nav-link" asp-controller="Portal" asp-action="Prescriptions">
+                        <i class="fas fa-prescription"></i> My Prescriptions
+                    </a>
+                    <a class="nav-link" asp-controller="Portal" asp-action="LabReports">
+                        <i class="fas fa-file-medical-alt"></i> My Lab Reports
+                    </a>
+                    <a class="nav-link" asp-controller="Portal" asp-action="Bills">
+                        <i class="fas fa-receipt"></i> Invoices & Payments
+                    </a>
+                    <a class="nav-link" asp-controller="Portal" asp-action="QrCard">
+                        <i class="fas fa-qrcode"></i> Digital Health Card
+                    </a>
+                }
+                else
+                {
+                    <a class="nav-link @(IsActive("Dashboard") ? "active" : "")" asp-controller="Dashboard" asp-action="Index">
+                        <i class="fas fa-th-large"></i> Dashboard
+                    </a>
+                }
+
+                @if (IsAnyRole("Doctor"))
+                {
+                    <div class="nav-section">Doctor Workspace</div>
+                    <a class="nav-link @(IsActive("Doctor") ? "active" : "")" asp-controller="Doctor" asp-action="Workspace">
+                        <i class="fas fa-user-md"></i> Clinical Workspace
+                    </a>
+                }
+
+                @if (IsAnyRole("Nurse"))
+                {
+                    <div class="nav-section">Nursing Station</div>
+                    <a class="nav-link @(IsActive("Nurse") ? "active" : "")" asp-controller="Nurse" asp-action="Station">
+                        <i class="fas fa-user-nurse"></i> Nurse Station
+                    </a>
+                    <a class="nav-link" asp-controller="Nurse" asp-action="MAR">
+                        <i class="fas fa-pills"></i> Inpatient MAR
+                    </a>
+                    <a class="nav-link" asp-controller="Nurse" asp-action="Handover">
+                        <i class="fas fa-clipboard-list"></i> Shift Handovers
+                    </a>
+                }
+
+                @if (IsAnyRole("Pharmacist"))
+                {
+                    <div class="nav-section">Pharmacy Desk</div>
+                    <a class="nav-link" asp-controller="Pharmacy" asp-action="Desk">
+                        <i class="fas fa-prescription-bottle-alt"></i> Dispensing Desk
+                    </a>
+                }
+
+                @if (IsAnyRole("LabTechnician"))
+                {
+                    <div class="nav-section">Laboratory Workbench</div>
+                    <a class="nav-link" asp-controller="Laboratory" asp-action="Workbench">
+                        <i class="fas fa-microscope"></i> Lab Workbench
+                    </a>
+                }
+
+                @if (IsAnyRole("BillingStaff"))
+                {
+                    <div class="nav-section">Billing Desk</div>
+                    <a class="nav-link" asp-controller="Billing" asp-action="Desk">
+                        <i class="fas fa-cash-register"></i> Billing Center
+                    </a>
+                }
+
+                @if (IsAnyRole("Admin","SuperAdmin","Receptionist","Doctor","Nurse"))
+                {
+                    <div class="nav-section">Patient Care</div>
+                    <a class="nav-link @(IsActive("Patients") ? "active" : "")" asp-controller="Patients" asp-action="Index">
+                        <i class="fas fa-user-injured"></i> Patients
+                    </a>
+                    <a class="nav-link @(IsActive("Appointments") ? "active" : "")" asp-controller="Appointments" asp-action="Index">
+                        <i class="fas fa-calendar-check"></i> Appointments
+                    </a>
+                    <a class="nav-link @(IsActive("OPD") ? "active" : "")" asp-controller="OPD" asp-action="Index">
+                        <i class="fas fa-notes-medical"></i> OPD Queue
+                    </a>
+                    <a class="nav-link @(IsActive("Emergency") ? "active" : "")" asp-controller="Emergency" asp-action="Index">
+                        <i class="fas fa-ambulance"></i> Emergency
+                    </a>
+                    <a class="nav-link @(IsActive("Admissions") ? "active" : "")" asp-controller="Admissions" asp-action="Index">
+                        <i class="fas fa-procedures"></i> Admissions
+                    </a>
+                    <a class="nav-link @(IsActive("Beds") ? "active" : "")" asp-controller="Beds" asp-action="Index">
+                        <i class="fas fa-bed"></i> Beds & Wards
+                    </a>
+                }
+
+                @if (IsAnyRole("Admin","SuperAdmin"))
+                {
+                    <div class="nav-section">Clinical Modules</div>
+                    <a class="nav-link @(IsActive("Prescriptions") ? "active" : "")" asp-controller="Prescriptions" asp-action="Index">
+                        <i class="fas fa-file-prescription"></i> Prescriptions
+                    </a>
+                    <a class="nav-link @(IsActive("Laboratory") ? "active" : "")" asp-controller="Laboratory" asp-action="Workbench">
+                        <i class="fas fa-flask"></i> Laboratory
+                    </a>
+                    <a class="nav-link @(IsActive("Pharmacy") ? "active" : "")" asp-controller="Pharmacy" asp-action="Desk">
+                        <i class="fas fa-pills"></i> Pharmacy
+                    </a>
+                    <a class="nav-link @(IsActive("BloodBank") ? "active" : "")" asp-controller="BloodBank" asp-action="Index">
+                        <i class="fas fa-tint"></i> Blood Bank
+                    </a>
+
+                    <div class="nav-section">Administration</div>
+                    <a class="nav-link @(IsActive("Doctors") ? "active" : "")" asp-controller="Doctors" asp-action="Index">
+                        <i class="fas fa-user-md"></i> Doctors
+                    </a>
+                    <a class="nav-link @(IsActive("Departments") ? "active" : "")" asp-controller="Departments" asp-action="Index">
+                        <i class="fas fa-hospital"></i> Departments
+                    </a>
+                    <a class="nav-link @(IsActive("Staff") ? "active" : "")" asp-controller="Staff" asp-action="Index">
+                        <i class="fas fa-users"></i> Staff Directory
+                    </a>
+                    <a class="nav-link @(IsActive("Billing") ? "active" : "")" asp-controller="Billing" asp-action="Desk">
+                        <i class="fas fa-file-invoice-dollar"></i> Billing & Finance
+                    </a>
+                    <a class="nav-link @(IsActive("Inventory") ? "active" : "")" asp-controller="Inventory" asp-action="Index">
+                        <i class="fas fa-boxes"></i> Inventory
+                    </a>
+                    <a class="nav-link @(IsActive("Expenses") ? "active" : "")" asp-controller="Expenses" asp-action="Index">
+                        <i class="fas fa-receipt"></i> Expenses
+                    </a>
+                    <a class="nav-link @(IsActive("Reports") ? "active" : "")" asp-controller="Reports" asp-action="Index">
+                        <i class="fas fa-chart-bar"></i> Analytics & Reports
+                    </a>
+                }
+
+                <div class="nav-section">System</div>
+                <a class="nav-link" asp-controller="OPD" asp-action="LiveQueue" target="_blank">
+                    <i class="fas fa-tv text-warning"></i> Waiting Hall TV Display
+                </a>
+                <a class="nav-link @(IsActive("Notifications") ? "active" : "")" asp-controller="Notifications" asp-action="Index">
+                    <i class="fas fa-bell"></i> Notifications
+                    <span class="badge-count" id="sidebarNotifCount" style="display:none;">0</span>
+                </a>
+            </div>
+
+            <div class="sidebar-footer">
+                <form asp-controller="Account" asp-action="Logout" method="post">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="nav-link w-100 text-start border-0 bg-transparent" style="color: #f87171;">
+                        <i class="fas fa-sign-out-alt"></i> Logout
+                    </button>
+                </form>
+            </div>
+        </nav>
+
+        <!-- ===== MAIN CONTENT ===== -->
+        <div class="main-content" id="mainContent">
+            <!-- TOPBAR -->
+            <div class="topbar">
+                <button class="topbar-toggle" onclick="toggleSidebar()" title="Toggle Sidebar">
+                    <i class="fas fa-bars"></i>
+                </button>
+
+                <div class="topbar-search d-none d-md-block">
+                    <i class="fas fa-search search-icon"></i>
+                    <input type="text" placeholder="Search patients, doctors, appointments..." id="globalSearch" autocomplete="off" />
+                    <div class="list-group position-absolute w-100 mt-1" id="searchResults" style="display:none; z-index:1000;"></div>
+                </div>
+
+                <div class="topbar-right">
+                    <a href="/OPD/LiveQueue" target="_blank" class="btn btn-sm btn-outline-primary d-none d-lg-inline-flex align-items-center gap-1 rounded-pill px-3 fw-600" title="Open Public Queue Screen">
+                        <i class="fas fa-tv"></i> Live TV Queue
+                    </a>
+
+                    <!-- Language Switcher (Phase 11 Multilingual) -->
+                    <div class="dropdown">
+                        <button class="topbar-icon-btn dropdown-toggle" data-bs-toggle="dropdown" title="Select Language">
+                            <i class="fas fa-language"></i>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end shadow-sm py-1" style="min-width:140px; font-size:13px;">
+                            <li><button type="button" class="dropdown-item" onclick="changeLanguage('en')">English (Default)</button></li>
+                            <li><button type="button" class="dropdown-item" onclick="changeLanguage('hi')">हिंदी (Hindi)</button></li>
+                            <li><button type="button" class="dropdown-item" onclick="changeLanguage('gu')">ગુજરાતી (Gujarati)</button></li>
+                        </ul>
+                    </div>
+
+                    <!-- Dark Mode Toggle (Phase 13 UI/UX) -->
+                    <button type="button" class="topbar-icon-btn" onclick="toggleDarkMode()" title="Toggle Dark/Light Theme">
+                        <i class="fas fa-moon" id="darkToggleIcon"></i>
+                    </button>
+
+                    <a href="/Notifications" class="topbar-icon-btn" title="Notifications">
+                        <i class="fas fa-bell"></i>
+                        <span class="badge bg-danger rounded-pill" id="notifBadge" style="display:none;">0</span>
+                    </a>
+                    <div class="dropdown">
+                        <div class="topbar-user dropdown-toggle" data-bs-toggle="dropdown" role="button">
+                            <div class="avatar">@initials</div>
+                            <div class="user-info d-none d-md-block">
+                                <div class="user-name">@userName</div>
+                                <div class="user-role">@currentRole</div>
+                            </div>
+                        </div>
+                        <ul class="dropdown-menu dropdown-menu-end shadow-sm" style="min-width:200px; border-radius:12px; border:1px solid #e9ecef;">
+                            <li><h6 class="dropdown-header">@userName</h6></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" asp-controller="Account" asp-action="ChangePassword"><i class="fas fa-key me-2 text-muted"></i>Change Password</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <form asp-controller="Account" asp-action="Logout" method="post" class="px-2">
+                                    @Html.AntiForgeryToken()
+                                    <button type="submit" class="dropdown-item text-danger rounded-2"><i class="fas fa-sign-out-alt me-2"></i>Logout</button>
+                                </form>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PAGE CONTENT -->
+            <div class="page-content">
+                <!-- Toast Notifications -->
+                @if (TempData["Success"] != null)
+                {
+                    <div class="alert alert-success alert-dismissible fade show d-flex align-items-center gap-2 mb-3" role="alert">
+                        <i class="fas fa-check-circle"></i>
+                        <span>@TempData["Success"]</span>
+                        <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert"></button>
+                    </div>
+                }
+                @if (TempData["Error"] != null)
+                {
+                    <div class="alert alert-danger alert-dismissible fade show d-flex align-items-center gap-2 mb-3" role="alert">
+                        <i class="fas fa-exclamation-circle"></i>
+                        <span>@TempData["Error"]</span>
+                        <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert"></button>
+                    </div>
+                }
+
+                @RenderBody()
+            </div>
+
+            <!-- FOOTER -->
+            <footer class="text-center py-3" style="font-size:12px; color:#adb5bd; border-top:1px solid #f0f2f5; background:#fff;">
+                &copy; @DateTime.Now.Year City General Hospital Management System &mdash; Built with ASP.NET Core MVC
+            </footer>
+        </div>
+    </div>
+}
+else
+{
+    @RenderBody()
+}
+
+<script src="~/lib/jquery/dist/jquery.min.js"></script>
+<script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+<script src="~/js/site.js"></script>
+
+@if (SignInManager.IsSignedIn(User))
+{
+<script>
+// ---- SIDEBAR TOGGLE ----
+function toggleSidebar() {
+    var sidebar = document.getElementById('sidebar');
+    var overlay = document.getElementById('sidebarOverlay');
+    if (window.innerWidth <= 991) {
+        sidebar.classList.toggle('show');
+        overlay.classList.toggle('show');
+    } else {
+        sidebar.style.width = sidebar.style.width === '70px' ? '' : '70px';
+        document.getElementById('mainContent').style.marginLeft = sidebar.style.width === '70px' ? '70px' : '';
+    }
+}
+
+// ---- NOTIFICATION COUNT ----
+function loadNotifCount() {
+    fetch('/Notifications/GetUnreadCount')
+        .then(r => r.json())
+        .then(data => {
+            if (data.count > 0) {
+                document.getElementById('notifBadge').textContent = data.count;
+                document.getElementById('notifBadge').style.display = '';
+                var sc = document.getElementById('sidebarNotifCount');
+                if (sc) { sc.textContent = data.count; sc.style.display = ''; }
+            }
+        }).catch(() => {});
+}
+loadNotifCount();
+setInterval(loadNotifCount, 60000);
+
+// ---- GLOBAL SEARCH ----
+var searchTimeout;
+document.getElementById('globalSearch')?.addEventListener('input', function() {
+    clearTimeout(searchTimeout);
+    var term = this.value.trim();
+    var results = document.getElementById('searchResults');
+    if (term.length < 2) { results.style.display = 'none'; return; }
+    searchTimeout = setTimeout(() => {
+        fetch('/Patients/Search?term=' + encodeURIComponent(term))
+            .then(r => r.json())
+            .then(data => {
+                if (data.length === 0) { results.style.display = 'none'; return; }
+                results.innerHTML = data.map(p =>
+                    `<a class="list-group-item list-group-item-action" href="/Patients/Details/${p.patientId}">
+                        <i class="fas fa-user-injured me-2 text-primary"></i>
+                        <strong>${p.fullName}</strong> <small class="text-muted">${p.patientCode} &middot; ${p.phone}</small>
+                    </a>`
+                ).join('');
+                results.style.display = 'block';
+            }).catch(() => {});
+    }, 300);
+});
+document.addEventListener('click', e => {
+    if (!e.target.closest('.topbar-search')) {
+        document.getElementById('searchResults').style.display = 'none';
+    }
+});
+
+// ---- AUTO DISMISS ALERTS ----
+setTimeout(() => {
+    document.querySelectorAll('.alert').forEach(a => {
+        var bsAlert = bootstrap.Alert.getInstance(a);
+        if (!bsAlert) bsAlert = new bootstrap.Alert(a);
+        bsAlert.close();
+    });
+}, 4000);
+</script>
+}
+
+@await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

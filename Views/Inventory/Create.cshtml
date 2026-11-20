@@ -1,0 +1,16 @@
+﻿@model HospitalManagementSystem.Models.InventoryItem
+@{ ViewData["Title"] = "Add Inventory Item"; }
+<div class="page-header"><div><h1 class="page-title">Add Inventory Item</h1></div></div>
+<div class="row justify-content-center"><div class="col-md-6"><div class="card"><div class="card-body">
+<form asp-action="Create" method="post">@Html.AntiForgeryToken()
+<div class="mb-3"><label asp-for="Name" class="form-label"></label><input asp-for="Name" class="form-control" required/></div>
+<div class="mb-3"><label asp-for="Category" class="form-label"></label><select asp-for="Category" class="form-select"><option value="Medical Equipment">Medical Equipment</option><option value="Surgical Supplies">Surgical Supplies</option><option value="Office Supplies">Office Supplies</option><option value="Cleaning Supplies">Cleaning Supplies</option><option value="PPE">PPE</option></select></div>
+<div class="mb-3"><label asp-for="Quantity" class="form-label"></label><input asp-for="Quantity" type="number" class="form-control" min="0" required/></div>
+<div class="mb-3"><label asp-for="Unit" class="form-label"></label><input asp-for="Unit" class="form-control" placeholder="Piece, Box, Pack..."/></div>
+<div class="mb-3"><label asp-for="MinStockLevel" class="form-label"></label><input asp-for="MinStockLevel" type="number" class="form-control"/></div>
+<div class="mb-3"><label asp-for="UnitPrice" class="form-label"></label><input asp-for="UnitPrice" type="number" step="0.01" class="form-control"/></div>
+<div class="mb-3"><label asp-for="Supplier" class="form-label"></label><input asp-for="Supplier" class="form-control"/></div>
+<div class="d-flex gap-2"><button type="submit" class="btn btn-primary"><i class="fas fa-save me-2"></i>Add Item</button><a href="/Inventory" class="btn btn-outline-secondary">Cancel</a></div>
+</form></div></div></div></div>
+@section Scripts { @{ await Html.RenderPartialAsync("_ValidationScriptsPartial"); } }
+

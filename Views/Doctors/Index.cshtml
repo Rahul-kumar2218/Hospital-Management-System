@@ -1,0 +1,30 @@
+﻿@model HospitalManagementSystem.ViewModels.DoctorListViewModel
+@{ ViewData["Title"] = "Doctors"; }
+<div class="page-header"><div><h1 class="page-title">Doctor Management</h1></div><a href="/Doctors/Create" class="btn btn-primary"><i class="fas fa-plus me-2"></i>Add Doctor</a></div>
+<div class="card mb-3"><div class="card-body py-3"><form method="get" class="row g-2 align-items-end">
+<div class="col-md-4"><input name="search" value="@Model.SearchTerm" class="form-control" placeholder="Doctor name or specialization..."/></div>
+<div class="col-md-3"><select name="departmentId" class="form-select"><option value="">All Departments</option>@foreach(var d in Model.Departments){<option value="@d.DepartmentId" selected="@(Model.FilterDepartmentId==d.DepartmentId)">@d.Name</option>}</select></div>
+<div class="col-md-2"><button type="submit" class="btn btn-primary w-100">Filter</button></div><div class="col-md-2"><a href="/Doctors" class="btn btn-outline-secondary w-100">Clear</a></div>
+</form></div></div>
+<div class="row g-3">
+@foreach(var d in Model.Doctors){
+<div class="col-md-6 col-lg-4">
+<div class="card h-100">
+<div class="card-body text-center">
+    <div style="width:64px;height:64px;background:#e8f0fe;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:700;color:#0d6efd;margin:0 auto 12px;">@d.FullName[0]</div>
+    <h6 class="fw-700 mb-0">@d.FullName</h6>
+    <div class="text-muted small mb-1">@d.Specialization</div>
+    <span class="badge bg-primary-subtle text-primary mb-2">@d.Department?.Name</span>
+    <div class="row g-1 text-center mt-2">
+        <div class="col-6"><div class="small text-muted">Experience</div><div class="fw-600">@d.ExperienceYears yrs</div></div>
+        <div class="col-6"><div class="small text-muted">Fee</div><div class="fw-600">₹@d.ConsultationFee</div></div>
+    </div>
+    <div class="small text-muted mt-2"><i class="fas fa-clock me-1"></i>@(d.AvailableTime ?? "N/A")</div>
+    <hr/>
+    <div class="d-flex justify-content-center gap-2">
+        <a href="/Doctors/Details/@d.DoctorId" class="btn btn-sm btn-outline-primary"><i class="fas fa-eye"></i></a>
+        <a href="/Doctors/Edit/@d.DoctorId" class="btn btn-sm btn-outline-warning"><i class="fas fa-edit"></i></a>
+        <span class="status-badge @(d.IsActive?"badge-active":"badge-inactive")">@(d.IsActive?"Active":"Inactive")</span>
+    </div>
+</div></div></div>}
+</div>

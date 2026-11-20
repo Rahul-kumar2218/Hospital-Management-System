@@ -1,0 +1,282 @@
+@model HospitalManagementSystem.ViewModels.PatientPortalViewModel
+@{
+    ViewData["Title"] = "Patient Portal";
+}
+
+<div class="page-header d-flex flex-wrap justify-content-between align-items-center gap-3">
+    <div>
+        <div class="d-flex align-items-center gap-2 mb-1">
+            <span class="badge bg-primary px-3 py-1 rounded-pill">Patient Portal</span>
+            <span class="badge bg-light text-dark border px-2 py-1">ID: @Model.Patient.PatientCode</span>
+        </div>
+        <h1 class="page-title mb-1">Welcome, @Model.Patient.FullName</h1>
+        <p class="page-subtitle mb-0">Manage your appointments, clinical records, diagnostic reports and medical bills in one secure hub.</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a asp-action="BookAppointment" class="btn btn-primary d-flex align-items-center gap-2 px-3 py-2 fw-600 rounded-pill shadow-sm">
+            <i class="fas fa-calendar-plus"></i> Book Appointment
+        </a>
+        <a asp-action="QrCard" class="btn btn-outline-primary d-flex align-items-center gap-2 px-3 py-2 fw-600 rounded-pill">
+            <i class="fas fa-qrcode"></i> Digital Health Card
+        </a>
+    </div>
+</div>
+
+<!-- ===== OPD QUEUE STATUS (IF ACTIVE TODAY) ===== -->
+@if (!string.IsNullOrEmpty(Model.ActiveOpdToken))
+{
+    <div class="card border-0 shadow-sm mb-4" style="background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%); color: #fff; border-radius: 16px;">
+        <div class="card-body p-4 d-flex flex-wrap justify-content-between align-items-center gap-3">
+            <div>
+                <span class="badge bg-white text-primary px-3 py-1 rounded-pill fw-700 mb-2">LIVE OPD QUEUE TRACKER</span>
+                <h3 class="fw-800 mb-1">Token @Model.ActiveOpdToken</h3>
+                <p class="mb-0 opacity-90 small">You are currently checked in for outpatient doctor consultation today.</p>
+            </div>
+            <div class="d-flex align-items-center gap-4 text-center">
+                <div class="bg-white bg-opacity-10 p-3 rounded-3">
+                    <div class="fs-4 fw-800">@Model.QueuePosition</div>
+                    <div class="small opacity-75">Ahead of You</div>
+                </div>
+                <div class="bg-white bg-opacity-10 p-3 rounded-3">
+                    <div class="fs-4 fw-800">~@Model.EstimatedWaitMinutes mins</div>
+                    <div class="small opacity-75">Estimated Wait</div>
+                </div>
+                <a href="/OPD/LiveQueue" target="_blank" class="btn btn-light fw-700 px-3 py-2 rounded-pill shadow-sm">
+                    <i class="fas fa-tv me-1 text-primary"></i> Live Board
+                </a>
+            </div>
+        </div>
+    </div>
+}
+
+<!-- ===== STAT CARDS ===== -->
+<div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+        <div class="card border-0 shadow-sm h-100 p-3" style="border-radius: 14px;">
+            <div class="d-flex align-items-center justify-content-between mb-2">
+                <span class="text-muted small fw-600">Upcoming Visits</span>
+                <span class="badge bg-primary-subtle text-primary p-2 rounded-circle"><i class="fas fa-calendar-check"></i></span>
+            </div>
+            <div class="fs-3 fw-800 text-dark">@Model.UpcomingAppointments.Count</div>
+            <a asp-action="BookAppointment" class="small text-primary fw-600 mt-2 text-decoration-none">Book New &rarr;</a>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="card border-0 shadow-sm h-100 p-3" style="border-radius: 14px;">
+            <div class="d-flex align-items-center justify-content-between mb-2">
+                <span class="text-muted small fw-600">Prescriptions</span>
+                <span class="badge bg-success-subtle text-success p-2 rounded-circle"><i class="fas fa-file-prescription"></i></span>
+            </div>
+            <div class="fs-3 fw-800 text-dark">@Model.Prescriptions.Count</div>
+            <a asp-action="Prescriptions" class="small text-success fw-600 mt-2 text-decoration-none">View All &rarr;</a>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="card border-0 shadow-sm h-100 p-3" style="border-radius: 14px;">
+            <div class="d-flex align-items-center justify-content-between mb-2">
+                <span class="text-muted small fw-600">Lab Reports</span>
+                <span class="badge bg-info-subtle text-info p-2 rounded-circle"><i class="fas fa-flask"></i></span>
+            </div>
+            <div class="fs-3 fw-800 text-dark">@Model.LabReports.Count</div>
+            <a asp-action="LabReports" class="small text-info fw-600 mt-2 text-decoration-none">Download &rarr;</a>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="card border-0 shadow-sm h-100 p-3" style="border-radius: 14px;">
+            <div class="d-flex align-items-center justify-content-between mb-2">
+                <span class="text-muted small fw-600">Pending Bills</span>
+                <span class="badge bg-warning-subtle text-warning p-2 rounded-circle"><i class="fas fa-receipt"></i></span>
+            </div>
+            <div class="fs-3 fw-800 text-dark">@Model.Invoices.Count(b => b.PaymentStatus == "Pending")</div>
+            <a asp-action="Bills" class="small text-warning fw-600 mt-2 text-decoration-none">Pay Online &rarr;</a>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4 mb-4">
+    <!-- UPCOMING APPOINTMENTS -->
+    <div class="col-lg-6">
+        <div class="card border-0 shadow-sm h-100" style="border-radius: 16px;">
+            <div class="card-header bg-transparent border-0 pt-4 px-4 pb-2 d-flex justify-content-between align-items-center">
+                <h5 class="fw-700 mb-0"><i class="fas fa-calendar-alt text-primary me-2"></i>Upcoming Appointments</h5>
+                <a asp-action="BookAppointment" class="btn btn-sm btn-outline-primary rounded-pill">+ Book</a>
+            </div>
+            <div class="card-body px-4 pb-4">
+                @if (Model.UpcomingAppointments.Any())
+                {
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light small">
+                                <tr>
+                                    <th>Date & Time</th>
+                                    <th>Doctor</th>
+                                    <th>Status</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var apt in Model.UpcomingAppointments)
+                                {
+                                    <tr>
+                                        <td>
+                                            <div class="fw-700">@apt.AppointmentDate.ToString("dd MMM yyyy")</div>
+                                            <small class="text-muted">@DateTime.Today.Add(apt.AppointmentTime).ToString("hh:mm tt")</small>
+                                        </td>
+                                        <td>
+                                            <div class="fw-600">@apt.Doctor?.FullName</div>
+                                            <small class="text-muted">@apt.Department?.Name</small>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-success-subtle text-success rounded-pill px-2 py-1">@apt.Status</span>
+                                        </td>
+                                        <td>
+                                            <form asp-action="CancelAppointment" method="post" onsubmit="return confirm('Are you sure you want to cancel this appointment?');">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="id" value="@apt.AppointmentId" />
+                                                <button type="submit" class="btn btn-sm btn-outline-danger py-0 px-2 rounded-pill" style="font-size:11px;">Cancel</button>
+                                            </form>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+                else
+                {
+                    <div class="text-center py-4 text-muted">
+                        <i class="fas fa-calendar-times fs-2 mb-2 d-block opacity-50"></i>
+                        <p class="mb-2">No upcoming appointments scheduled.</p>
+                        <a asp-action="BookAppointment" class="btn btn-sm btn-primary rounded-pill px-3">Book an Appointment Now</a>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+
+    <!-- RECENT PRESCRIPTIONS -->
+    <div class="col-lg-6">
+        <div class="card border-0 shadow-sm h-100" style="border-radius: 16px;">
+            <div class="card-header bg-transparent border-0 pt-4 px-4 pb-2 d-flex justify-content-between align-items-center">
+                <h5 class="fw-700 mb-0"><i class="fas fa-file-prescription text-success me-2"></i>Recent Prescriptions</h5>
+                <a asp-action="Prescriptions" class="text-success small fw-600 text-decoration-none">View All</a>
+            </div>
+            <div class="card-body px-4 pb-4">
+                @if (Model.Prescriptions.Any())
+                {
+                    <div class="list-group list-group-flush">
+                        @foreach (var rx in Model.Prescriptions)
+                        {
+                            <div class="list-group-item px-0 py-3 border-bottom d-flex justify-content-between align-items-center">
+                                <div>
+                                    <div class="fw-700 text-dark">@rx.Diagnosis</div>
+                                    <div class="small text-muted">Prescribed by @rx.Doctor?.FullName &middot; @rx.CreatedAt.ToString("dd MMM yyyy")</div>
+                                    <div class="badge bg-light text-dark border mt-1">@rx.Items.Count medication(s)</div>
+                                </div>
+                                <a href="/Prescriptions/Print/@rx.PrescriptionId" target="_blank" class="btn btn-sm btn-outline-success rounded-pill px-3">
+                                    <i class="fas fa-print me-1"></i> View / Print
+                                </a>
+                            </div>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <div class="text-center py-4 text-muted">
+                        <i class="fas fa-notes-medical fs-2 mb-2 d-block opacity-50"></i>
+                        <p class="mb-0">No digital prescriptions recorded yet.</p>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- LAB REPORTS -->
+    <div class="col-lg-6">
+        <div class="card border-0 shadow-sm h-100" style="border-radius: 16px;">
+            <div class="card-header bg-transparent border-0 pt-4 px-4 pb-2 d-flex justify-content-between align-items-center">
+                <h5 class="fw-700 mb-0"><i class="fas fa-vial text-info me-2"></i>Diagnostic Test Reports</h5>
+                <a asp-action="LabReports" class="text-info small fw-600 text-decoration-none">View All</a>
+            </div>
+            <div class="card-body px-4 pb-4">
+                @if (Model.LabReports.Any())
+                {
+                    <div class="list-group list-group-flush">
+                        @foreach (var lab in Model.LabReports)
+                        {
+                            <div class="list-group-item px-0 py-3 border-bottom d-flex justify-content-between align-items-center">
+                                <div>
+                                    <div class="fw-700 text-dark">@lab.LabTest?.Name</div>
+                                    <small class="text-muted">Sample #@lab.SampleBarcode &middot; @lab.RequestedAt.ToString("dd MMM yyyy")</small>
+                                    @if (lab.IsAbnormal)
+                                    {
+                                        <span class="badge bg-danger-subtle text-danger ms-2">Abnormal Flag: @lab.AbnormalFlag</span>
+                                    }
+                                </div>
+                                <a href="/Laboratory/Report/@lab.LabTestRequestId" target="_blank" class="btn btn-sm btn-outline-info rounded-pill px-3">
+                                    <i class="fas fa-file-pdf me-1"></i> Report
+                                </a>
+                            </div>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <div class="text-center py-4 text-muted">
+                        <i class="fas fa-flask fs-2 mb-2 d-block opacity-50"></i>
+                        <p class="mb-0">No diagnostic laboratory reports ready.</p>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+
+    <!-- BILLING INVOICES -->
+    <div class="col-lg-6">
+        <div class="card border-0 shadow-sm h-100" style="border-radius: 16px;">
+            <div class="card-header bg-transparent border-0 pt-4 px-4 pb-2 d-flex justify-content-between align-items-center">
+                <h5 class="fw-700 mb-0"><i class="fas fa-file-invoice-dollar text-warning me-2"></i>Invoices & Billing</h5>
+                <a asp-action="Bills" class="text-warning small fw-600 text-decoration-none">View All</a>
+            </div>
+            <div class="card-body px-4 pb-4">
+                @if (Model.Invoices.Any())
+                {
+                    <div class="list-group list-group-flush">
+                        @foreach (var bill in Model.Invoices)
+                        {
+                            <div class="list-group-item px-0 py-3 border-bottom d-flex justify-content-between align-items-center">
+                                <div>
+                                    <div class="fw-700 text-dark">@bill.BillCode &mdash; ₹@bill.TotalAmount.ToString("N2")</div>
+                                    <small class="text-muted">Date: @bill.CreatedAt.ToString("dd MMM yyyy") &middot; @bill.PaymentMethod</small>
+                                </div>
+                                <div class="d-flex align-items-center gap-2">
+                                    @if (bill.PaymentStatus == "Paid")
+                                    {
+                                        <span class="badge bg-success-subtle text-success rounded-pill px-3 py-1">PAID</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-warning-subtle text-warning rounded-pill px-3 py-1">PENDING</span>
+                                    }
+                                    <a href="/Billing/Invoice/@bill.BillId" target="_blank" class="btn btn-sm btn-outline-secondary rounded-pill px-2" title="Print Invoice">
+                                        <i class="fas fa-print"></i>
+                                    </a>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <div class="text-center py-4 text-muted">
+                        <i class="fas fa-receipt fs-2 mb-2 d-block opacity-50"></i>
+                        <p class="mb-0">No billing invoices found.</p>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+

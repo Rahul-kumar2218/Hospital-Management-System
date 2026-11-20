@@ -1,0 +1,80 @@
+@model List<HospitalManagementSystem.Models.LabTestRequest>
+@{
+    ViewData["Title"] = "My Diagnostic Lab Reports";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <a asp-action="Index" class="btn btn-sm btn-outline-secondary rounded-pill px-3 mb-2">&larr; Back to Portal</a>
+        <h2 class="fw-800 mb-1">Diagnostic Laboratory Reports</h2>
+        <p class="text-muted small mb-0">Verified pathology and diagnostic investigation reports.</p>
+    </div>
+</div>
+
+@if (Model.Any())
+{
+    <div class="card border-0 shadow-sm" style="border-radius: 16px; overflow:hidden;">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th class="ps-4">Request #</th>
+                        <th>Test Name</th>
+                        <th>Ordered By</th>
+                        <th>Sample Barcode</th>
+                        <th>Status</th>
+                        <th>Verified Date</th>
+                        <th class="text-end pe-4">Report</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var lab in Model)
+                    {
+                        <tr>
+                            <td class="ps-4 fw-700">@lab.RequestCode</td>
+                            <td>
+                                <div class="fw-700">@lab.LabTest?.Name</div>
+                                <small class="text-muted">@lab.LabTest?.Category</small>
+                            </td>
+                            <td>@lab.Doctor?.FullName</td>
+                            <td><code>@(lab.SampleBarcode ?? "Pending")</code></td>
+                            <td>
+                                @if (lab.Status == "Verified" || lab.Status == "ReportReleased")
+                                {
+                                    <span class="badge bg-success-subtle text-success rounded-pill px-3 py-1">Verified</span>
+                                }
+                                else if (lab.Status == "Completed")
+                                {
+                                    <span class="badge bg-warning-subtle text-warning rounded-pill px-3 py-1">In Verification</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-secondary-subtle text-secondary rounded-pill px-3 py-1">@lab.Status</span>
+                                }
+                                @if (lab.IsAbnormal)
+                                {
+                                    <span class="badge bg-danger-subtle text-danger rounded-pill px-2 py-1 ms-1">Abnormal</span>
+                                }
+                            </td>
+                            <td>@(lab.VerifiedAt.HasValue ? lab.VerifiedAt.Value.ToString("dd MMM yyyy") : "-")</td>
+                            <td class="text-end pe-4">
+                                <a href="/Laboratory/Report/@lab.LabTestRequestId" target="_blank" class="btn btn-sm btn-outline-primary rounded-pill px-3">
+                                    <i class="fas fa-file-pdf me-1"></i> View Report
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+}
+else
+{
+    <div class="card border-0 shadow-sm p-5 text-center text-muted" style="border-radius: 16px;">
+        <i class="fas fa-flask fs-1 mb-3 opacity-50"></i>
+        <h5>No Laboratory Reports Ready</h5>
+        <p class="mb-0">Diagnostic test reports will become available here once verified by our pathology team.</p>
+    </div>
+}
+

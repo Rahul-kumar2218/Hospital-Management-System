@@ -1,0 +1,125 @@
+@{
+    ViewData["Title"] = "Book Appointment Online";
+    var departments = ViewBag.Departments as List<HospitalManagementSystem.Models.Department> ?? new();
+    var doctors = ViewBag.Doctors as List<HospitalManagementSystem.Models.Doctor> ?? new();
+    var patient = ViewBag.Patient as HospitalManagementSystem.Models.Patient;
+}
+
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="d-flex align-items-center gap-2 mb-3">
+            <a asp-action="Index" class="btn btn-sm btn-outline-secondary rounded-pill px-3">&larr; Back to Portal</a>
+            <span class="text-muted small">&bull; Online Appointment Scheduling</span>
+        </div>
+
+        <div class="card border-0 shadow-sm" style="border-radius: 18px; overflow:hidden;">
+            <div class="card-header p-4" style="background: linear-gradient(135deg, #0d6efd, #0dcaf0); color:#fff;">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="bg-white rounded-circle p-3 text-primary shadow-sm">
+                        <i class="fas fa-calendar-plus fs-3"></i>
+                    </div>
+                    <div>
+                        <h4 class="fw-800 mb-1">Book an Outpatient Consultation</h4>
+                        <p class="mb-0 opacity-90 small">Select medical specialty, doctor, date, and preferred time slot.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card-body p-4 p-md-5">
+                @if (!ViewData.ModelState.IsValid && ViewData.ModelState.ErrorCount > 0)
+                {
+                    <div class="alert alert-danger py-2 small mb-4">
+                        <div asp-validation-summary="All"></div>
+                    </div>
+                }
+
+                <form asp-action="BookAppointment" method="post">
+                    @Html.AntiForgeryToken()
+
+                    <div class="alert alert-info py-2 px-3 small d-flex align-items-center gap-2 mb-4">
+                        <i class="fas fa-user-circle fs-5"></i>
+                        <span>Booking for: <strong>@patient?.FullName</strong> (ID: @patient?.PatientCode &middot; Phone: @patient?.Phone)</span>
+                    </div>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-600 small">Select Department *</label>
+                            <select name="departmentId" id="deptSelect" class="form-select" required>
+                                <option value="">-- Choose Medical Specialty --</option>
+                                @foreach (var d in departments)
+                                {
+                                    <option value="@d.DepartmentId">@d.Name</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-600 small">Select Doctor *</label>
+                            <select name="doctorId" id="doctorSelect" class="form-select" required>
+                                <option value="">-- Choose Doctor --</option>
+                                @foreach (var doc in doctors)
+                                {
+                                    <option value="@doc.DoctorId" data-dept="@doc.DepartmentId" data-fee="@doc.ConsultationFee">
+                                        @doc.FullName (@doc.Specialization &mdash; Fee: ₹@doc.ConsultationFee.ToString("N0"))
+                                    </option>
+                                }
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-600 small">Preferred Date *</label>
+                            <input type="date" name="appointmentDate" class="form-control" min="@DateTime.Today.ToString("yyyy-MM-dd")" value="@DateTime.Today.AddDays(1).ToString("yyyy-MM-dd")" required />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-600 small">Preferred Time Slot *</label>
+                            <select name="appointmentTime" class="form-select" required>
+                                <option value="09:00:00">09:00 AM</option>
+                                <option value="09:30:00">09:30 AM</option>
+                                <option value="10:00:00">10:00 AM</option>
+                                <option value="10:30:00">10:30 AM</option>
+                                <option value="11:00:00">11:00 AM</option>
+                                <option value="11:30:00">11:30 AM</option>
+                                <option value="14:00:00">02:00 PM</option>
+                                <option value="14:30:00">02:30 PM</option>
+                                <option value="15:00:00">03:00 PM</option>
+                                <option value="16:00:00">04:00 PM</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label fw-600 small">Symptoms / Reason for Visit</label>
+                        <textarea name="reason" rows="3" class="form-control" placeholder="Describe your primary complaints or medical concerns..."></textarea>
+                    </div>
+
+                    <div class="d-flex justify-content-end gap-2">
+                        <a asp-action="Index" class="btn btn-light rounded-pill px-4">Cancel</a>
+                        <button type="submit" class="btn btn-primary rounded-pill px-5 fw-700 shadow-sm">
+                            <i class="fas fa-check-circle me-1"></i> Confirm Booking
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+document.getElementById('deptSelect').addEventListener('change', function() {
+    var deptId = this.value;
+    var docSelect = document.getElementById('doctorSelect');
+    for (var i = 0; i < docSelect.options.length; i++) {
+        var opt = docSelect.options[i];
+        if (!opt.value) continue;
+        if (!deptId || opt.getAttribute('data-dept') === deptId) {
+            opt.style.display = '';
+        } else {
+            opt.style.display = 'none';
+        }
+    }
+});
+</script>
+}
+

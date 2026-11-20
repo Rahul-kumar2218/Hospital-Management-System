@@ -1,0 +1,26 @@
+﻿@model IEnumerable<HospitalManagementSystem.Models.Expense>
+@{ ViewData["Title"] = "Expenses"; }
+<div class="page-header"><div><h1 class="page-title">Expenses</h1></div><a href="/Expenses/Create" class="btn btn-primary"><i class="fas fa-plus me-2"></i>Record Expense</a></div>
+<div class="row g-3 mb-3">
+<div class="col-md-4"><div class="stat-card blue"><div class="stat-card-icon blue"><i class="fas fa-calendar-day"></i></div><div class="stat-value">₹@(ViewBag.TodayTotal?.ToString("N0")??0)</div><div class="stat-label">Today</div></div></div>
+<div class="col-md-4"><div class="stat-card orange"><div class="stat-card-icon orange"><i class="fas fa-calendar-alt"></i></div><div class="stat-value">₹@(ViewBag.MonthTotal?.ToString("N0")??0)</div><div class="stat-label">This Month</div></div></div>
+<div class="col-md-4"><div class="stat-card red"><div class="stat-card-icon red"><i class="fas fa-receipt"></i></div><div class="stat-value">₹@(ViewBag.GrandTotal?.ToString("N0")??0)</div><div class="stat-label">Total</div></div></div>
+</div>
+<div class="card mb-3"><div class="card-body py-3"><form method="get" class="row g-2 align-items-end">
+<div class="col-md-3"><select name="category" class="form-select"><option value="">All Categories</option>@foreach(var c in new[]{"Salary","Utilities","Maintenance","Medical Supplies","Equipment","Other"}){<option value="@c" selected="@(ViewBag.Category==(string)c)">@c</option>}</select></div>
+<div class="col-md-3"><input name="fromDate" type="date" class="form-control" value="@ViewBag.FromDate"/></div>
+<div class="col-md-3"><input name="toDate" type="date" class="form-control" value="@ViewBag.ToDate"/></div>
+<div class="col-md-2"><button type="submit" class="btn btn-primary w-100">Filter</button></div>
+<div class="col-md-1"><a href="/Expenses" class="btn btn-outline-secondary w-100">Clear</a></div>
+</form></div></div>
+<div class="card"><div class="card-body p-0">
+<div class="table-responsive"><table class="table"><thead><tr><th>Description</th><th>Category</th><th>Amount</th><th>Date</th><th>Entered By</th><th>Actions</th></tr></thead><tbody>
+@foreach(var e in Model){<tr>
+<td class="fw-600">@e.Description</td>
+<td><span class="badge bg-light text-dark">@e.Category</span></td>
+<td class="fw-600 text-danger">₹@e.Amount.ToString("N0")</td>
+<td class="small">@e.ExpenseDate.ToString("dd MMM yyyy")</td>
+<td class="small">@(e.EnteredBy??"-")</td>
+<td><a href="/Expenses/Edit/@e.ExpenseId" class="btn btn-sm btn-outline-primary btn-icon"><i class="fas fa-edit"></i></a></td>
+</tr>}
+</tbody></table></div></div></div>

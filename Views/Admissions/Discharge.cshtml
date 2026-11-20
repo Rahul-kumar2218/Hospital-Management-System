@@ -1,0 +1,14 @@
+﻿@model HospitalManagementSystem.Models.Admission
+@{ ViewData["Title"] = "Discharge Patient"; }
+<div class="page-header"><div><h1 class="page-title text-danger">Discharge Patient</h1></div></div>
+<div class="row justify-content-center"><div class="col-md-7">
+<div class="card border-danger mb-3"><div class="card-body">
+<div class="row"><div class="col-6"><strong>Patient:</strong> @Model.Patient?.FullName</div><div class="col-6"><strong>Admission ID:</strong> @Model.AdmissionCode</div><div class="col-6 mt-2"><strong>Doctor:</strong> @Model.Doctor?.FullName</div><div class="col-6 mt-2"><strong>Ward/Bed:</strong> @Model.Ward / @Model.Bed?.BedNumber</div><div class="col-6 mt-2"><strong>Admitted:</strong> @Model.AdmissionDate.ToString("dd MMM yyyy")</div><div class="col-6 mt-2"><strong>Diagnosis:</strong> @Model.Diagnosis</div></div>
+</div></div>
+<div class="card"><div class="card-header"><span class="card-title">Discharge Information</span></div><div class="card-body">
+<form asp-action="DischargeConfirm" asp-route-id="@Model.AdmissionId" method="post">@Html.AntiForgeryToken()
+<div class="mb-3"><label class="form-label">Final Diagnosis</label><input name="finalDiagnosis" value="@Model.Diagnosis" class="form-control"/></div>
+<div class="mb-3"><label class="form-label">Treatment Summary</label><textarea name="treatmentSummary" class="form-control" rows="3"></textarea></div>
+<div class="mb-4"><label class="form-label">Doctor's Notes</label><textarea name="doctorNotes" class="form-control" rows="2"></textarea></div>
+<div class="d-flex gap-2"><button type="submit" class="btn btn-danger"><i class="fas fa-sign-out-alt me-2"></i>Confirm Discharge</button><a href="/Admissions" class="btn btn-outline-secondary">Cancel</a></div>
+</form></div></div></div></div>

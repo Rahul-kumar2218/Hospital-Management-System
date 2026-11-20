@@ -1,0 +1,75 @@
+@model HospitalManagementSystem.Models.Doctor
+@{ ViewData["Title"] = Model.FullName + " - Details"; }
+
+<div class="page-header">
+    <div>
+        <nav aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="/Doctors">Doctors</a></li><li class="breadcrumb-item active">@Model.FullName</li></ol></nav>
+        <h1 class="page-title">Doctor Details</h1>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="/Doctors/Edit/@Model.DoctorId" class="btn btn-outline-primary"><i class="fas fa-edit me-1"></i>Edit</a>
+        <a href="/Appointments/Create" class="btn btn-primary"><i class="fas fa-calendar-plus me-1"></i>Book with Doctor</a>
+    </div>
+</div>
+
+<div class="row g-3">
+    <div class="col-md-4">
+        <div class="card text-center">
+            <div class="card-body">
+                <div class="profile-avatar mb-3">@Model.FullName[0]</div>
+                <h5 class="fw-700 mb-1">@Model.FullName</h5>
+                <div class="text-muted small mb-2">@Model.Specialization</div>
+                <span class="badge bg-primary-subtle text-primary mb-3">@Model.Department?.Name</span>
+                <div>
+                    <span class="status-badge @(Model.IsActive ? "badge-active" : "badge-inactive")">@(Model.IsActive ? "Active" : "Inactive")</span>
+                </div>
+                <hr class="section-divider" />
+                <div class="profile-info-item"><span class="profile-info-label">Qualification</span><span>@(Model.Qualification ?? "N/A")</span></div>
+                <div class="profile-info-item"><span class="profile-info-label">Experience</span><span>@Model.ExperienceYears years</span></div>
+                <div class="profile-info-item"><span class="profile-info-label">Consultation Fee</span><span class="fw-700 text-success">₹@Model.ConsultationFee.ToString("N0")</span></div>
+                <div class="profile-info-item"><span class="profile-info-label">Phone</span><span>@Model.Phone</span></div>
+                <div class="profile-info-item"><span class="profile-info-label">Email</span><span class="small">@Model.Email</span></div>
+                <div class="profile-info-item"><span class="profile-info-label">Available Days</span><span>@(Model.AvailableDays ?? "All Days")</span></div>
+                <div class="profile-info-item"><span class="profile-info-label">Timings</span><span>@(Model.AvailableTime ?? "10:00 - 17:00")</span></div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-8">
+        @if (!string.IsNullOrEmpty(Model.Biography))
+        {
+            <div class="card mb-3">
+                <div class="card-header"><span class="card-title"><i class="fas fa-user-circle me-2"></i>Biography</span></div>
+                <div class="card-body"><p class="mb-0">@Model.Biography</p></div>
+            </div>
+        }
+        <div class="card">
+            <div class="card-header"><span class="card-title"><i class="fas fa-calendar-check me-2"></i>Recent Appointments</span></div>
+            <div class="card-body p-0">
+                @if (Model.Appointments == null || !Model.Appointments.Any())
+                {
+                    <div class="empty-state py-4"><i class="fas fa-calendar-times"></i><h5>No appointments scheduled yet</h5></div>
+                }
+                else
+                {
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead><tr><th>Code</th><th>Patient</th><th>Date</th><th>Time</th><th>Status</th></tr></thead>
+                            <tbody>
+                            @foreach(var apt in Model.Appointments.Take(5))
+                            {
+                                <tr>
+                                    <td><span class="badge bg-primary-subtle text-primary">@apt.AppointmentCode</span></td>
+                                    <td>@apt.Patient?.FullName</td>
+                                    <td>@apt.AppointmentDate.ToString("dd MMM yyyy")</td>
+                                    <td>@apt.AppointmentTime.ToString(@"hh\:mm")</td>
+                                    <td><span class="status-badge badge-@apt.Status.ToLower()">@apt.Status</span></td>
+                                </tr>
+                            }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>

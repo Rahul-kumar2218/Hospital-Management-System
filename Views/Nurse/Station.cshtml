@@ -1,0 +1,217 @@
+@model HospitalManagementSystem.ViewModels.NurseStationViewModel
+@{
+    ViewData["Title"] = "Nursing Station & Inpatient Ward";
+    string selectedWard = ViewBag.SelectedWard ?? "All";
+}
+
+<div class="page-header d-flex flex-wrap justify-content-between align-items-center gap-3">
+    <div>
+        <div class="d-flex align-items-center gap-2 mb-1">
+            <span class="badge bg-danger px-3 py-1 rounded-pill">Nursing Command Center</span>
+            <span class="badge bg-light text-dark border px-2 py-1">Ward Management</span>
+        </div>
+        <h1 class="page-title mb-1">Inpatient Nursing Station</h1>
+        <p class="page-subtitle mb-0">Bed census, clinical vital sign charting, MAR delivery schedules and shift handovers.</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a asp-action="Handover" class="btn btn-outline-primary d-flex align-items-center gap-2 px-3 py-2 fw-600 rounded-pill">
+            <i class="fas fa-clipboard-list"></i> Shift Handover (SBAR)
+        </a>
+        <a asp-action="MAR" class="btn btn-primary d-flex align-items-center gap-2 px-3 py-2 fw-600 rounded-pill shadow-sm">
+            <i class="fas fa-pills"></i> Medication Administration (MAR)
+        </a>
+    </div>
+</div>
+
+<!-- STAT CARDS -->
+<div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+        <div class="stat-card blue">
+            <div class="stat-card-icon blue"><i class="fas fa-bed"></i></div>
+            <div class="stat-value">@Model.TotalBeds</div>
+            <div class="stat-label">Total Ward Beds</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="stat-card red">
+            <div class="stat-card-icon red"><i class="fas fa-user-injured"></i></div>
+            <div class="stat-value">@Model.OccupiedBeds</div>
+            <div class="stat-label">Occupied Inpatient Beds</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="stat-card cyan">
+            <div class="stat-card-icon cyan"><i class="fas fa-pump-soap"></i></div>
+            <div class="stat-value">@Model.CleaningBeds</div>
+            <div class="stat-label">Beds in Sanitization / Cleaning</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="stat-card orange">
+            <div class="stat-card-icon orange"><i class="fas fa-clock"></i></div>
+            <div class="stat-value">@Model.PendingMedicationsCount</div>
+            <div class="stat-label">Pending Doses Today</div>
+        </div>
+    </div>
+</div>
+
+<!-- BED & WARD MONITOR -->
+<div class="card border-0 shadow-sm mb-4" style="border-radius: 18px;">
+    <div class="card-header bg-transparent border-0 pt-4 px-4 pb-2 d-flex flex-wrap justify-content-between align-items-center gap-2">
+        <div>
+            <h5 class="fw-800 text-dark mb-1"><i class="fas fa-th-large text-primary me-2"></i>Inpatient Bed Census &amp; Sanitization Grid</h5>
+            <small class="text-muted">Track bed availability, occupied patients, and certify room disinfection after discharge.</small>
+        </div>
+        <!-- Ward Filter Pills -->
+        <div class="d-flex gap-2">
+            <a asp-action="Station" asp-route-ward="All" class="btn btn-sm @(selectedWard == "All" ? "btn-dark" : "btn-light") rounded-pill px-3">All Wards</a>
+            <a asp-action="Station" asp-route-ward="General" class="btn btn-sm @(selectedWard == "General" ? "btn-dark" : "btn-light") rounded-pill px-3">General Ward</a>
+            <a asp-action="Station" asp-route-ward="ICU" class="btn btn-sm @(selectedWard == "ICU" ? "btn-dark" : "btn-light") rounded-pill px-3">ICU</a>
+            <a asp-action="Station" asp-route-ward="Private" class="btn btn-sm @(selectedWard == "Private" ? "btn-dark" : "btn-light") rounded-pill px-3">Private</a>
+            <a asp-action="Station" asp-route-ward="Emergency" class="btn btn-sm @(selectedWard == "Emergency" ? "btn-dark" : "btn-light") rounded-pill px-3">Emergency</a>
+        </div>
+    </div>
+    <div class="card-body px-4 pb-4">
+        <div class="row g-3">
+            @foreach (var bed in Model.Beds)
+            {
+                var cardColor = bed.Status == "Available" ? "border-success" :
+                                bed.Status == "Occupied" ? "border-danger" :
+                                bed.Status == "Cleaning" ? "border-info" : "border-secondary";
+
+                var badgeColor = bed.Status == "Available" ? "bg-success" :
+                                 bed.Status == "Occupied" ? "bg-danger" :
+                                 bed.Status == "Cleaning" ? "bg-info text-dark" : "bg-secondary";
+
+                var admission = Model.AdmittedPatients.FirstOrDefault(a => a.BedId == bed.BedId);
+
+                <div class="col-sm-6 col-md-4 col-lg-3">
+                    <div class="card border @cardColor shadow-sm p-3 h-100" style="border-radius: 14px;">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="fs-5 fw-800 text-dark">@bed.BedNumber</span>
+                            <span class="badge @badgeColor rounded-pill px-2 py-1" style="font-size:10px;">@bed.Status.ToUpper()</span>
+                        </div>
+                        <div class="small text-muted mb-2">@bed.Ward Ward &middot; @(bed.Room ?? "Bay 1")</div>
+
+                        @if (bed.Status == "Occupied" && admission != null)
+                        {
+                            <div class="bg-light p-2 rounded-2 mb-2 small">
+                                <div class="fw-700 text-dark text-truncate">@admission.Patient?.FullName</div>
+                                <div class="text-muted" style="font-size:11px;">Dr. @admission.Doctor?.FullName</div>
+                                <div class="text-secondary" style="font-size:11px;">Admitted: @admission.AdmissionDate.ToString("dd MMM")</div>
+                            </div>
+                            <div class="mt-auto d-flex gap-1">
+                                <a asp-action="RecordVitals" asp-route-patientId="@admission.PatientId" asp-route-admissionId="@admission.AdmissionId" class="btn btn-sm btn-outline-danger w-100 py-1" style="font-size:11px;">
+                                    <i class="fas fa-heartbeat"></i> Vitals
+                                </a>
+                                <a asp-action="MAR" asp-route-admissionId="@admission.AdmissionId" class="btn btn-sm btn-outline-primary w-100 py-1" style="font-size:11px;">
+                                    <i class="fas fa-pills"></i> MAR
+                                </a>
+                            </div>
+                        }
+                        else if (bed.Status == "Cleaning" || bed.Status == "Maintenance")
+                        {
+                            <div class="bg-info bg-opacity-10 p-2 rounded-2 mb-2 small text-info text-dark">
+                                <i class="fas fa-pump-soap me-1"></i> Awaiting Sanitization Inspection
+                            </div>
+                            <form asp-action="MarkBedCleaned" method="post" class="mt-auto">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="id" value="@bed.BedId" />
+                                <button type="submit" class="btn btn-sm btn-success w-100 py-1 fw-600" style="font-size:11px;">
+                                    <i class="fas fa-check-circle me-1"></i> Certify Cleaned
+                                </button>
+                            </form>
+                        }
+                        else
+                        {
+                            <div class="text-success small py-3"><i class="fas fa-check-circle me-1"></i>Ready for Patient Allocation</div>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- RECENT VITALS -->
+    <div class="col-lg-6">
+        <div class="card border-0 shadow-sm h-100" style="border-radius: 18px;">
+            <div class="card-header bg-transparent border-0 pt-4 px-4 pb-2 d-flex justify-content-between align-items-center">
+                <h5 class="fw-800 text-dark mb-0"><i class="fas fa-heartbeat text-danger me-2"></i>Recent Inpatient Vitals</h5>
+            </div>
+            <div class="card-body px-4 pb-4">
+                @if (Model.RecentVitals.Any())
+                {
+                    <div class="table-responsive">
+                        <table class="table table-sm table-hover align-middle mb-0">
+                            <thead class="table-light small">
+                                <tr>
+                                    <th>Patient</th>
+                                    <th>BP</th>
+                                    <th>Pulse</th>
+                                    <th>Temp</th>
+                                    <th>SpO2</th>
+                                    <th>Time</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var v in Model.RecentVitals)
+                                {
+                                    <tr>
+                                        <td class="fw-700">@v.Patient?.FullName</td>
+                                        <td>@v.BloodPressureSystolic/@v.BloodPressureDiastolic</td>
+                                        <td>@v.PulseRate bpm</td>
+                                        <td>@v.Temperature°F</td>
+                                        <td>
+                                            <span class="badge @(v.OxygenSaturation < 92 ? "bg-danger" : "bg-success") rounded-pill">
+                                                @v.OxygenSaturation%
+                                            </span>
+                                        </td>
+                                        <td class="small text-muted">@v.RecordedAt.ToString("HH:mm")</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+                else
+                {
+                    <div class="text-center py-4 text-muted">No vitals logged today.</div>
+                }
+            </div>
+        </div>
+    </div>
+
+    <!-- NURSING OBSERVATION NOTES -->
+    <div class="col-lg-6">
+        <div class="card border-0 shadow-sm h-100" style="border-radius: 18px;">
+            <div class="card-header bg-transparent border-0 pt-4 px-4 pb-2">
+                <h5 class="fw-800 text-dark mb-0"><i class="fas fa-clipboard-check text-success me-2"></i>Recent Nursing Progress Notes</h5>
+            </div>
+            <div class="card-body px-4 pb-4">
+                @if (Model.RecentNotes.Any())
+                {
+                    <div class="list-group list-group-flush">
+                        @foreach (var note in Model.RecentNotes)
+                        {
+                            <div class="list-group-item px-0 py-2 border-bottom">
+                                <div class="d-flex justify-content-between">
+                                    <strong class="text-dark">@note.Patient?.FullName</strong>
+                                    <small class="text-muted">@note.CreatedAt.ToString("dd MMM, HH:mm")</small>
+                                </div>
+                                <div class="small text-muted mb-1">Nurse: @note.NurseName &bull; <span class="badge bg-light text-dark border">@note.Category</span></div>
+                                <div class="small text-secondary">@note.NoteText</div>
+                            </div>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <div class="text-center py-4 text-muted">No nursing progress notes recorded today.</div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+

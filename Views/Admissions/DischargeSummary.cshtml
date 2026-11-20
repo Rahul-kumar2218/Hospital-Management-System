@@ -1,0 +1,25 @@
+﻿@model HospitalManagementSystem.Models.Admission
+@{ ViewData["Title"] = "Discharge Summary"; }
+<div class="page-header no-print"><div><h1 class="page-title">Discharge Summary</h1></div>
+<div class="d-flex gap-2"><button onclick="window.print()" class="btn btn-outline-primary"><i class="fas fa-print me-1"></i>Print</button><a href="/Admissions" class="btn btn-outline-secondary">Back</a></div></div>
+<div class="card">
+<div class="card-body">
+<div class="print-header text-center mb-4">
+    <h3 class="fw-800 text-primary">City General Hospital</h3>
+    <h5>Discharge Summary</h5>
+</div>
+<div class="row mb-3">
+    <div class="col-6 col-md-3"><div class="small text-muted">Admission ID</div><div class="fw-600">@Model.AdmissionCode</div></div>
+    <div class="col-6 col-md-3"><div class="small text-muted">Patient Name</div><div class="fw-600">@Model.Patient?.FullName</div></div>
+    <div class="col-6 col-md-3"><div class="small text-muted">Doctor</div><div class="fw-600">@Model.Doctor?.FullName</div></div>
+    <div class="col-6 col-md-3"><div class="small text-muted">Ward / Bed</div><div class="fw-600">@Model.Ward / @Model.Bed?.BedNumber</div></div>
+    <div class="col-6 col-md-3 mt-2"><div class="small text-muted">Admission Date</div><div class="fw-600">@Model.AdmissionDate.ToString("dd MMM yyyy")</div></div>
+    <div class="col-6 col-md-3 mt-2"><div class="small text-muted">Discharge Date</div><div class="fw-600">@Model.ActualDischargeDate?.ToString("dd MMM yyyy")</div></div>
+    <div class="col-6 col-md-3 mt-2"><div class="small text-muted">Total Days</div><div class="fw-600">@((Model.ActualDischargeDate - Model.AdmissionDate)?.Days ?? 0) days</div></div>
+</div>
+<hr/>
+<div class="mb-3"><strong>Diagnosis:</strong><p class="mt-1">@Model.Diagnosis</p></div>
+@if (!string.IsNullOrEmpty(Model.TreatmentSummary)){<div class="mb-3"><strong>Treatment Summary:</strong><p class="mt-1">@Model.TreatmentSummary</p></div>}
+@if (!string.IsNullOrEmpty(Model.DoctorNotes)){<div class="mb-3"><strong>Doctor Notes:</strong><p class="mt-1">@Model.DoctorNotes</p></div>}
+<div class="row mt-4"><div class="col-6"><div class="signature-box">Patient / Guardian Signature</div></div><div class="col-6 text-end"><div class="signature-box" style="margin-left:auto;">Doctor Signature</div></div></div>
+</div></div>

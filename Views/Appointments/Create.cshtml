@@ -1,0 +1,102 @@
+@model HospitalManagementSystem.ViewModels.AppointmentCreateViewModel
+@{ ViewData["Title"] = "Book Appointment"; }
+
+<div class="page-header">
+    <div><nav aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="/Appointments">Appointments</a></li><li class="breadcrumb-item active">Book New</li></ol></nav>
+    <h1 class="page-title">Book Appointment</h1></div>
+</div>
+
+<div class="row justify-content-center">
+<div class="col-md-8">
+<div class="card">
+    <div class="card-header"><span class="card-title"><i class="fas fa-calendar-plus me-2"></i>Appointment Details</span></div>
+    <div class="card-body">
+        <form asp-action="Create" method="post" id="appointmentForm">
+            @Html.AntiForgeryToken()
+            <div asp-validation-summary="All" class="alert alert-danger"></div>
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label class="form-label">Patient <span class="text-danger">*</span></label>
+                    <select asp-for="PatientId" class="form-select" required>
+                        <option value="">-- Select Patient --</option>
+                        @foreach(var p in Model.Patients ?? new List<HospitalManagementSystem.Models.Patient>()){
+                            <option value="@p.PatientId">@p.FullName (@p.PatientCode)</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Department <span class="text-danger">*</span></label>
+                    <select asp-for="DepartmentId" class="form-select" id="deptSelect" required>
+                        <option value="">-- Select Department --</option>
+                        @foreach(var d in Model.Departments ?? new List<HospitalManagementSystem.Models.Department>()){
+                            <option value="@d.DepartmentId">@d.Name</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Doctor <span class="text-danger">*</span></label>
+                    <select asp-for="DoctorId" class="form-select" id="doctorSelect" required>
+                        <option value="">-- Select Department First --</option>
+                    </select>
+                    <div id="doctorInfo" class="mt-2 p-2 rounded-2 bg-light small" style="display:none;"></div>
+                </div>
+                <div class="col-md-3">
+                    <label asp-for="AppointmentDate" class="form-label"></label>
+                    <input asp-for="AppointmentDate" type="date" class="form-control" min="@DateTime.Today.ToString("yyyy-MM-dd")" required />
+                    <span asp-validation-for="AppointmentDate" class="text-danger small"></span>
+                </div>
+                <div class="col-md-3">
+                    <label asp-for="AppointmentTime" class="form-label">Time Slot <span class="text-danger">*</span></label>
+                    <select asp-for="AppointmentTime" class="form-select" required>
+                        @for(int h = 8; h <= 18; h++) {
+                            foreach(int m in new[]{0,30}) {
+                                var t = $"{h:D2}:{m:D2}";
+                                <option value="@t">@t</option>
+                            }
+                        }
+                    </select>
+                </div>
+                <div class="col-12">
+                    <label asp-for="Reason" class="form-label"></label>
+                    <textarea asp-for="Reason" class="form-control" rows="2" placeholder="Reason for appointment..."></textarea>
+                </div>
+            </div>
+            <div class="d-flex gap-2 mt-4">
+                <button type="submit" class="btn btn-primary"><i class="fas fa-check me-2"></i>Book Appointment</button>
+                <a href="/Appointments" class="btn btn-outline-secondary">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+</div>
+</div>
+
+@section Scripts {
+@{ await Html.RenderPartialAsync("_ValidationScriptsPartial"); }
+<script>
+document.getElementById('deptSelect').addEventListener('change', function() {
+    var deptId = this.value;
+    var sel = document.getElementById('doctorSelect');
+    var info = document.getElementById('doctorInfo');
+    sel.innerHTML = '<option value="">Loading...</option>';
+    if (!deptId) { sel.innerHTML = '<option value="">-- Select Department First --</option>'; info.style.display='none'; return; }
+    fetch('/Doctors/ByDepartment?departmentId=' + deptId)
+        .then(r => r.json())
+        .then(data => {
+            sel.innerHTML = '<option value="">-- Select Doctor --</option>';
+            data.forEach(d => {
+                sel.innerHTML += `<option value="${d.doctorId}" data-fee="${d.consultationFee}" data-days="${d.availableDays}" data-time="${d.availableTime}">${d.fullName} - ${d.specialization}</option>`;
+            });
+            if (data.length === 0) sel.innerHTML = '<option value="">No doctors in this department</option>';
+        });
+});
+document.getElementById('doctorSelect').addEventListener('change', function() {
+    var opt = this.options[this.selectedIndex];
+    var info = document.getElementById('doctorInfo');
+    if (this.value) {
+        info.style.display = 'block';
+        info.innerHTML = `<i class="fas fa-info-circle text-primary me-1"></i><strong>Consultation Fee:</strong> ₹${opt.dataset.fee} &nbsp;|&nbsp; <strong>Available:</strong> ${opt.dataset.days} &nbsp;|&nbsp; <strong>Timing:</strong> ${opt.dataset.time}`;
+    } else { info.style.display = 'none'; }
+});
+</script>
+}

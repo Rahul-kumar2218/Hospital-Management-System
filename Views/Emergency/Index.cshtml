@@ -1,0 +1,23 @@
+﻿@model IEnumerable<HospitalManagementSystem.Models.EmergencyCase>
+@{ ViewData["Title"] = "Emergency"; }
+<div class="page-header"><div><h1 class="page-title"><i class="fas fa-ambulance me-2 text-danger"></i>Emergency Management</h1><p class="page-subtitle">Active emergency cases</p></div><a href="/Emergency/Create" class="btn btn-danger"><i class="fas fa-plus me-2"></i>Register Emergency</a></div>
+@if(!Model.Any()){<div class="card"><div class="card-body"><div class="empty-state"><i class="fas fa-check-circle text-success"></i><h5>No active emergency cases</h5></div></div></div>}
+else {
+<div class="row g-3">
+@foreach(var e in Model){
+<div class="col-md-6 col-lg-4">
+<div class="card border-@(e.Priority=="Critical"?"danger":e.Priority=="Serious"?"warning":"success")">
+<div class="card-body">
+    <div class="d-flex justify-content-between align-items-start mb-2">
+        <span class="badge bg-@(e.Priority=="Critical"?"danger":e.Priority=="Serious"?"warning":"success")">@e.Priority</span>
+        <small class="text-muted">@e.ArrivalTime.ToLocalTime().ToString("HH:mm")</small>
+    </div>
+    <div class="fw-700 mb-1">@(e.Patient?.FullName ?? e.WalkInPatientName ?? "Walk-in Patient")</div>
+    <div class="small text-muted mb-2"><i class="fas fa-exclamation-triangle me-1"></i>@e.EmergencyType</div>
+    <div class="small mb-2"><i class="fas fa-user-md me-1"></i>@(e.Doctor?.FullName ?? "Unassigned")</div>
+    <div class="d-flex gap-2 mt-2">
+    <form method="post" action="/Emergency/UpdateStatus/@e.EmergencyCaseId">@Html.AntiForgeryToken()<input type="hidden" name="status" value="Admitted"/><button type="submit" class="btn btn-sm btn-outline-primary">Admit</button></form>
+    <form method="post" action="/Emergency/UpdateStatus/@e.EmergencyCaseId">@Html.AntiForgeryToken()<input type="hidden" name="status" value="Discharged"/><button type="submit" class="btn btn-sm btn-outline-success">Discharge</button></form>
+    </div>
+</div></div></div>}
+</div>}
