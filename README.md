@@ -1,3 +1,9 @@
+🌐 Live Demo
+
+Live Website: "Click Here to Open Medicare Hospital Management System" (medicare-hospital-system-e4deftfrfghjcdb9.indiasouthcentral-01.azurewebsites.net)
+
+The project is deployed on Microsoft Azure App Service.
+
 # City General Hospital — Smart Healthcare Management Platform (2026–2030)
 
 > **Enterprise-Grade ASP.NET Core 10.0 MVC + Entity Framework Core + ASP.NET Core Identity**  
